@@ -1336,6 +1336,7 @@ namespace LastExit.Tests.Gameplay.PlayMode
                 capture.Apply();
                 string path = "TestResults/Campaign-" + levelId + "-" + _viewport.width + "x" +
                     _viewport.height + ".png";
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
                 System.IO.File.WriteAllBytes(path, capture.EncodeToPNG());
             }
             finally

@@ -34,6 +34,8 @@ Unity-головоломка о посадке пассажиров в авто�
 
 Откройте **Window → General → Test Runner**, выполните **Run All** отдельно для EditMode и PlayMode. Также доступны **LAST EXIT → Gameplay → Run EditMode Tests / Run PlayMode Tests**. Перед запуском сохраните изменения сцен и выйдите из Play Mode. Результаты пользовательского runner находятся в локальной `TestResults`, которая не входит в Git.
 
+Проверка подготовки репозитория, 11.11.2026: чистый клон восстановил пакеты, импортировал ассеты и прошёл **232/232 EditMode**. Полный PlayMode в рабочей папке дал **58/60**: два сценария `CampaignLandscapeCompletesFourLevelsAndResetsInterruptedAttempts` и `CampaignPortraitCompletesFourLevelsAndResetsInterruptedAttempts` остановились на проверке drag во втором уровне. При проверке клона дополнительно исправлено создание отсутствующей папки для скриншотов тестов; затем оба сценария прошли в чистом клоне (**2/2**). Причина первоначальных сбоев ввода не локализована, поэтому стабильный PASS полного PlayMode-набора не заявляется. Проверки исходной базы проекта и 15 конфигураций уровней также прошли.
+
 ## WebGL
 
 Выйдите из Play Mode, сохраните сцену и выберите **LAST EXIT → Gameplay → Build Yandex Release WebGL**. Экспорт появится в `Builds/WebGL_Yandex_FullFinal_20261108`. Для локального просмотра запустите HTTP-сервер из папки экспорта, например `python -m http.server 8000`, и откройте `http://localhost:8000`. Через `file://` сборка не запускается.
