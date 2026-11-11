@@ -135,7 +135,7 @@ namespace LastExit.Domain
                         throw new ArgumentException("Passenger IDs must be unique.");
                     }
 
-                    if (passenger.Kind == "human")
+                    if (passenger.Kind == PassengerDefinition.HumanKind)
                     {
                         passengerCounts[passenger.Route]++;
                     }

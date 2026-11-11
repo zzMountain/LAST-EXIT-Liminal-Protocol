@@ -11,15 +11,17 @@ namespace LastExit.Editor.ArtLab
 {
     public class ArtLabVerification : IErrorCallbacks
     {
+        private const string ResultsFolder = "TestResults";
         private const string RunCommand = "LAST EXIT/Art Lab/Run Tests";
         private const string ProbeCommand = "LAST EXIT/Art Lab/Verify Runner Error Recovery";
         private const string ContextKey = "LastExit.ArtLab.Verification.Context";
         private const string RestoreContextKey = "LastExit.ArtLab.Verification.RestoreContext";
         private const string GameplayContextKey = "LastExit.Gameplay.Verification.Context";
         private const string GameplayRestoreContextKey = "LastExit.Gameplay.Verification.RestoreContext";
-        private const string DefaultReportPrefix = "TestResults/ArtLab-EditMode";
-        private const string ErrorReportPrefix = "TestResults/FullAudit-ArtLabRunnerError-Failure";
-        private const string ErrorReportPath = "TestResults/FullAudit-ArtLabRunnerError.txt";
+        private const string DefaultReportPrefix = ResultsFolder + "/ArtLab-EditMode";
+        private const string StatusReportPath = ResultsFolder + "/ArtLab-tests.txt";
+        private const string ErrorReportPrefix = ResultsFolder + "/FullAudit-ArtLabRunnerError-Failure";
+        private const string ErrorReportPath = ResultsFolder + "/FullAudit-ArtLabRunnerError.txt";
         private const string SyntheticFailure = "Synthetic Art Lab runner error; no test was executed.";
         private static ArtLabVerification s_active;
 
@@ -48,9 +50,9 @@ namespace LastExit.Editor.ArtLab
             try
             {
                 api.RegisterCallbacks(callbacks);
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(callbacks._reportPrefix + ".txt", "STARTING: Art Lab EditMode tests");
-                File.WriteAllText("TestResults/ArtLab-tests.txt", "STARTING: Art Lab EditMode tests");
+                File.WriteAllText(StatusReportPath, "STARTING: Art Lab EditMode tests");
                 SessionState.SetString(ContextKey, SerializeContext(callbacks._setup, callbacks._reportPrefix));
                 Filter filter = new Filter
                 {
@@ -91,10 +93,10 @@ namespace LastExit.Editor.ArtLab
             }
 
             VerificationContext context = JsonUtility.FromJson<VerificationContext>(json);
-            Directory.CreateDirectory("TestResults");
+            Directory.CreateDirectory(ResultsFolder);
             const string Interrupted = "INTERRUPTED: run exited before completion; no passing result claimed.";
             File.WriteAllText(context.ReportPrefix + ".txt", Interrupted);
-            File.WriteAllText("TestResults/ArtLab-tests.txt", Interrupted);
+            File.WriteAllText(StatusReportPath, Interrupted);
             SessionState.SetString(RestoreContextKey, json);
             SessionState.EraseString(ContextKey);
 
@@ -120,7 +122,7 @@ namespace LastExit.Editor.ArtLab
             try
             {
                 api.RegisterCallbacks(callbacks);
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(ErrorReportPath, "IN PROGRESS: " + SyntheticFailure);
                 SessionState.SetString(ContextKey, expected);
                 callbacks.OnError(SyntheticFailure);
@@ -167,14 +169,14 @@ namespace LastExit.Editor.ArtLab
 
             try
             {
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(_reportPrefix + ".xml", result.ToXml().OuterXml);
                 Directory.CreateDirectory(ArtLabPreview.OutputRoot + "/Reports");
                 File.WriteAllText(ArtLabPreview.OutputRoot + "/Reports/Unity-EditMode.xml", result.ToXml().OuterXml);
                 string summary = "Passed=" + result.PassCount + "; Failed=" + result.FailCount +
                     "; State=" + result.ResultState;
                 File.WriteAllText(_reportPrefix + ".txt", summary);
-                File.WriteAllText("TestResults/ArtLab-tests.txt", summary);
+                File.WriteAllText(StatusReportPath, summary);
             }
             finally
             {
@@ -191,12 +193,12 @@ namespace LastExit.Editor.ArtLab
 
             try
             {
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(_reportPrefix + ".txt", "FAILED: " + message);
 
                 if (_reportPrefix == DefaultReportPrefix)
                 {
-                    File.WriteAllText("TestResults/ArtLab-tests.txt", "FAILED: " + message);
+                    File.WriteAllText(StatusReportPath, "FAILED: " + message);
                 }
             }
             finally

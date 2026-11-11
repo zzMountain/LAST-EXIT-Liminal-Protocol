@@ -78,8 +78,8 @@ namespace LastExit.Editor.ArtLab
         {
             Scene scene = SceneManager.GetActiveScene();
             ArtLabSceneReport report = new ArtLabSceneReport();
-            report.unityVersion = Application.unityVersion;
-            report.scenePath = scene.path;
+            report.UnityVersion = Application.unityVersion;
+            report.ScenePath = scene.path;
             HashSet<Mesh> passengerMeshes = new HashSet<Mesh>();
             HashSet<Mesh> busMeshes = new HashSet<Mesh>();
 
@@ -87,13 +87,13 @@ namespace LastExit.Editor.ArtLab
             {
                 if (root.activeSelf && root.name.StartsWith(ArtLabSceneBuilder.LookPrefix))
                 {
-                    report.activeLook = root.name;
-                    report.activeLooks++;
+                    report.ActiveLook = root.name;
+                    report.ActiveLooks++;
                 }
 
                 foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
                 {
-                    report.missingScripts += GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject);
+                    report.MissingScripts += GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(child.gameObject);
                 }
 
                 foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
@@ -116,33 +116,33 @@ namespace LastExit.Editor.ArtLab
                             (material.shader.name != "Universal Render Pipeline/Lit" &&
                             (renderer.GetComponent<TextMesh>() == null || material.shader.name != "GUI/Text Shader")))
                         {
-                            report.invalidMaterials++;
+                            report.InvalidMaterials++;
                         }
                     }
 
                     if (renderer.gameObject.activeInHierarchy && mesh != null)
                     {
-                        report.activeRenderers++;
+                        report.ActiveRenderers++;
 
                         for (int index = 0; index < mesh.subMeshCount; index++)
                         {
-                            report.activeTriangles += (int)mesh.GetIndexCount(index) / 3;
+                            report.ActiveTriangles += (int)mesh.GetIndexCount(index) / 3;
                         }
                     }
                 }
             }
 
-            report.passengerMeshSources = passengerMeshes.Count;
-            report.busMeshSources = busMeshes.Count;
-            report.passengerClips = GetClipCount("PASSENGER_BASE");
-            report.doorClips = GetClipCount("Q3_DOOR");
-            report.buildScenes = EditorBuildSettings.scenes.Where(entry => entry.enabled).Select(entry => entry.path).ToArray();
-            report.passed = report.missingScripts == 0 && report.invalidMaterials == 0 &&
-                report.passengerMeshSources == 1 && report.busMeshSources == 4 && report.passengerClips == 3 &&
-                report.doorClips == 1 && report.activeLooks == 1 && report.activeRenderers > 0 &&
+            report.PassengerMeshSources = passengerMeshes.Count;
+            report.BusMeshSources = busMeshes.Count;
+            report.PassengerClips = GetClipCount("PASSENGER_BASE");
+            report.DoorClips = GetClipCount("Q3_DOOR");
+            report.BuildScenes = EditorBuildSettings.scenes.Where(entry => entry.enabled).Select(entry => entry.path).ToArray();
+            report.Passed = report.MissingScripts == 0 && report.InvalidMaterials == 0 &&
+                report.PassengerMeshSources == 1 && report.BusMeshSources == 4 && report.PassengerClips == 3 &&
+                report.DoorClips == 1 && report.ActiveLooks == 1 && report.ActiveRenderers > 0 &&
                 scene.path == ArtLabSceneBuilder.ScenePath;
             Directory.CreateDirectory(OutputRoot + "/Reports");
-            File.WriteAllText(OutputRoot + "/Reports/unity_scene_audit.json", JsonUtility.ToJson(report, true));
+            File.WriteAllText(OutputRoot + "/Reports/unity_scene_audit.json", ArtLabReportJson.Serialize(report, true));
             return report;
         }
 

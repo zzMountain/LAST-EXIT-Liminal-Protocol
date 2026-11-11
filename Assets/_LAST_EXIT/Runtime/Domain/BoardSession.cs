@@ -318,7 +318,7 @@ namespace LastExit.Domain
         {
             int queueIndex = FindQueueIndex(queueId);
             PassengerDefinition passenger = queueIndex < 0 ? null : GetHead(queueIndex);
-            return passenger != null && passenger.Kind == "echo";
+            return passenger != null && passenger.Kind == PassengerDefinition.EchoKind;
         }
 
         public LaneAccess GetLaneAccess(string queueId)
@@ -413,7 +413,7 @@ namespace LastExit.Domain
             PassengerDefinition passenger = GetHead(queueIndex);
             _isolationCount++;
             _lastIsolationResult = completed.Kind == BoardStepKind.Corruption ? "RiskAccepted" :
-                passenger.Kind == "human" ? "HumanLost" : "EchoRemoved";
+                passenger.Kind == PassengerDefinition.HumanKind ? "HumanLost" : "EchoRemoved";
             _heads[queueIndex]++;
             _securityQueueIndex = -1;
 
@@ -430,7 +430,7 @@ namespace LastExit.Domain
                     return;
                 }
             }
-            else if (passenger.Kind == "human")
+            else if (passenger.Kind == PassengerDefinition.HumanKind)
             {
                 AssignLostSeat(passenger.Route);
                 _stability--;
@@ -577,7 +577,7 @@ namespace LastExit.Domain
             {
                 PassengerDefinition passenger = GetHead(queueIndex);
 
-                if (passenger != null && passenger.Kind == "echo"
+                if (passenger != null && passenger.Kind == PassengerDefinition.EchoKind
                     && GetLaneAccess(_definition.Queues[queueIndex].Id).CanBoard)
                 {
                     return queueIndex;
@@ -602,7 +602,7 @@ namespace LastExit.Domain
 
                 PassengerDefinition passenger = GetHead(queueIndex);
 
-                if (passenger.Kind == "echo")
+                if (passenger.Kind == PassengerDefinition.EchoKind)
                 {
                     _hasDeferredSecurityCheck = _boardingSteps.Count > 0;
 

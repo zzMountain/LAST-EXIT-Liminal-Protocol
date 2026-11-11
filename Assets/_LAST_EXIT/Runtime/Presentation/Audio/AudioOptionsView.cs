@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace LastExit.Presentation
 {
-    public class AudioOptionsView : MonoBehaviour, IControlActivation
+    public class AudioOptionsView : MonoBehaviour, IControlActivation, IAudioOptionsLayout
     {
         private const float MinimumScale = 0.001f;
         private const float ButtonHeight = 44;

@@ -64,6 +64,11 @@ namespace LastExit.Presentation
 
         private void OnDisable()
         {
+            if (_constructed == false)
+            {
+                return;
+            }
+
             _scan.onClick.RemoveListener(OnScanRequested);
             _quarantine[0].onClick.RemoveListener(OnSelectionRequested);
             _risk.onClick.RemoveListener(OnRiskRequested);
@@ -249,10 +254,16 @@ namespace LastExit.Presentation
                 return;
             }
 
+            Canvas canvas = GetComponentInParent<Canvas>();
+
+            if (canvas == null)
+            {
+                throw new InvalidOperationException("Inspection controls require a parent Canvas.");
+            }
+
             _constructed = true;
             _checkPanel.SetActive(false);
             // The old modal stays inactive. Runtime controls belong to the existing board/footer.
-            Canvas canvas = GetComponentInParent<Canvas>();
             _targetRoot = (RectTransform)new GameObject("On-field quarantine targets", typeof(RectTransform)).transform;
             _targetRoot.SetParent(canvas.transform, false);
             _targetRoot.anchorMin = Vector2.zero;

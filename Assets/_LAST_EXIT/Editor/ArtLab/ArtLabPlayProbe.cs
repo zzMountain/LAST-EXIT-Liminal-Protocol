@@ -75,19 +75,19 @@ namespace LastExit.Editor.ArtLab
             try
             {
                 ArtLabPlayReport report = new ArtLabPlayReport();
-                report.scene = SceneManager.GetActiveScene().path;
-                report.animators = s_animators.Length;
-                report.playingAnimators = s_animators.Count(animator => animator.GetCurrentAnimatorClipInfo(0).Length > 0);
-                report.movingHierarchies = s_moving.Count;
-                report.placementStable = s_actorPositions.All(pair =>
+                report.Scene = SceneManager.GetActiveScene().path;
+                report.Animators = s_animators.Length;
+                report.PlayingAnimators = s_animators.Count(animator => animator.GetCurrentAnimatorClipInfo(0).Length > 0);
+                report.MovingHierarchies = s_moving.Count;
+                report.PlacementStable = s_actorPositions.All(pair =>
                     Vector3.Distance(pair.Key.position, pair.Value) < .001f);
-                report.clips = s_animators.SelectMany(animator => animator.GetCurrentAnimatorClipInfo(0))
+                report.Clips = s_animators.SelectMany(animator => animator.GetCurrentAnimatorClipInfo(0))
                     .Select(info => info.clip.name).Distinct().ToArray();
-                report.passed = report.animators == 13 && report.playingAnimators == 13 && s_moving.Count == 13 &&
-                    report.placementStable;
+                report.Passed = report.Animators == 13 && report.PlayingAnimators == 13 && s_moving.Count == 13 &&
+                    report.PlacementStable;
                 Directory.CreateDirectory(ArtLabPreview.OutputRoot + "/Reports");
                 File.WriteAllText(ArtLabPreview.OutputRoot + "/Reports/unity_play_probe.json",
-                    JsonUtility.ToJson(report, true));
+                    ArtLabReportJson.Serialize(report, true));
                 ArtLabPreview.Capture(ArtLabPreview.GetCamera(), ArtLabPreview.OutputRoot +
                     "/Previews/Readability/PlayMode_ColdLiminal_16x9.png", 1600, 900);
             }

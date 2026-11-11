@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using LastExit.Content;
 using LastExit.Domain;
 using LastExit.Presentation;
@@ -83,6 +84,70 @@ namespace LastExit.Tests.Gameplay.PlayMode
                 _panel.ScanRequested -= OnScan;
                 _panel.QuarantineRequested -= OnQuarantine;
             }
+        }
+
+        [UnityTest]
+        public IEnumerator MissingCanvasRejectsConstructionWithoutMutationAndAllowsCorrectedHierarchy()
+        {
+            GameObject canvasObject = new GameObject("Inspection contract canvas", typeof(RectTransform), typeof(Canvas));
+            GameObject owner = new GameObject("Inspection contract panel", typeof(RectTransform));
+            owner.SetActive(false);
+            LevelSecurityPanel panel = owner.AddComponent<LevelSecurityPanel>();
+            GameObject footer = new GameObject("Inspection contract footer", typeof(RectTransform));
+            footer.transform.SetParent(owner.transform, false);
+            GameObject checkPanel = new GameObject("Inspection contract modal");
+            checkPanel.transform.SetParent(owner.transform, false);
+            Button scan = CreateInspectionButton(footer.transform, "Scan");
+            Button selection = CreateInspectionButton(footer.transform, "Selection");
+            Button risk = CreateInspectionButton(footer.transform, "Risk");
+            Button template = CreateInspectionButton(owner.transform, "Button template");
+            Text instruction = new GameObject("Instruction template", typeof(RectTransform), typeof(Text))
+                .GetComponent<Text>();
+            instruction.transform.SetParent(owner.transform, false);
+            SetInspectionField(panel, "_scan", scan);
+            SetInspectionField(panel, "_quarantine", new[] { selection });
+            SetInspectionField(panel, "_risk", risk);
+            SetInspectionField(panel, "_checkPanel", checkPanel);
+            SetInspectionField(panel, "_checkScan", template);
+            SetInspectionField(panel, "_checkText", instruction);
+            int childCount = owner.transform.childCount;
+            int scanRequests = 0;
+            panel.ScanRequested += () => scanRequests++;
+
+            try
+            {
+                for (int attempt = 0; attempt < 2; attempt++)
+                {
+                    System.InvalidOperationException error = Assert.Throws<System.InvalidOperationException>(
+                        () => panel.GetQueueControl("A"));
+                    Assert.AreEqual("Inspection controls require a parent Canvas.", error.Message);
+                    Assert.IsTrue(checkPanel.activeSelf);
+                    Assert.AreEqual(childCount, owner.transform.childCount);
+                    Assert.AreSame(footer.transform, risk.transform.parent);
+                    Assert.AreEqual(0, canvasObject.transform.childCount);
+                }
+
+                owner.transform.SetParent(canvasObject.transform, false);
+                Button target = panel.GetQueueControl("A");
+                Assert.IsNotNull(target);
+                Assert.AreSame(target, panel.GetQueueControl("A"));
+
+                for (int activation = 0; activation < 2; activation++)
+                {
+                    owner.SetActive(true);
+                    scan.onClick.Invoke();
+                    Assert.AreEqual(activation + 1, scanRequests);
+                    owner.SetActive(false);
+                }
+            }
+            finally
+            {
+                Object.Destroy(owner);
+                Object.Destroy(canvasObject);
+            }
+
+            yield return null;
+            LogAssert.NoUnexpectedReceived();
         }
 
         [UnityTest]
@@ -371,6 +436,22 @@ namespace LastExit.Tests.Gameplay.PlayMode
             Assert.IsFalse(_panel.IsInspectionOpen);
             Assert.IsNull(_panel.SelectedQueue);
             Assert.IsFalse(_panel.IsVideo);
+        }
+
+        private static Button CreateInspectionButton(Transform parent, string name)
+        {
+            GameObject buttonObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(parent, false);
+            GameObject label = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            label.transform.SetParent(buttonObject.transform, false);
+            return buttonObject.GetComponent<Button>();
+        }
+
+        private static void SetInspectionField(LevelSecurityPanel panel, string name, object value)
+        {
+            FieldInfo field = typeof(LevelSecurityPanel).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, name);
+            field.SetValue(panel, value);
         }
 
         private void Refresh()

@@ -6,6 +6,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 namespace LastExit.Editor.ArtLab
 {
@@ -50,15 +51,15 @@ namespace LastExit.Editor.ArtLab
 
             PreviewBus bus = GetBuses(scene)[0];
             ProbeState state = new ProbeState();
-            state.scene = scene.path;
-            state.originalPosition = bus.transform.position;
-            state.authoredPosition = bus.transform.position + Vector3.right * AuthoredOffset;
-            state.previousPaused = EditorApplication.isPaused;
-            state.previousRunInBackground = Application.runInBackground;
+            state.Scene = scene.path;
+            state.OriginalPosition = bus.transform.position;
+            state.AuthoredPosition = bus.transform.position + Vector3.right * AuthoredOffset;
+            state.PreviousPaused = EditorApplication.isPaused;
+            state.PreviousRunInBackground = Application.runInBackground;
             SaveState(state);
             EditorApplication.update -= RestoreWhenReady;
             EditorApplication.update += RestoreWhenReady;
-            bus.transform.position = state.authoredPosition;
+            bus.transform.position = state.AuthoredPosition;
             EditorSceneManager.MarkSceneDirty(scene);
             EditorApplication.isPaused = false;
             EditorApplication.isPlaying = true;
@@ -78,9 +79,9 @@ namespace LastExit.Editor.ArtLab
                 throw new InvalidOperationException("No authored-baseline probe state is available to recover.");
             }
 
-            ProbeState state = JsonUtility.FromJson<ProbeState>(json);
+            ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(json);
 
-            if (SceneManager.GetActiveScene().path != state.scene || SceneManager.sceneCount != 1)
+            if (SceneManager.GetActiveScene().path != state.Scene || SceneManager.sceneCount != 1)
             {
                 throw new InvalidOperationException("Recovery requires the same single scene that the probe opened.");
             }
@@ -96,7 +97,7 @@ namespace LastExit.Editor.ArtLab
 
         private static void SaveState(ProbeState state)
         {
-            SessionState.SetString(StateKey, JsonUtility.ToJson(state));
+            SessionState.SetString(StateKey, ArtLabReportJson.Serialize(state));
         }
 
         private static void Poll()
@@ -115,17 +116,17 @@ namespace LastExit.Editor.ArtLab
 
             try
             {
-                ProbeState state = JsonUtility.FromJson<ProbeState>(SessionState.GetString(StateKey, string.Empty));
+                ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(SessionState.GetString(StateKey, string.Empty));
                 Scene scene = SceneManager.GetActiveScene();
                 PreviewBus bus = GetBuses(scene)[0];
                 PreviewBusDrag drag = scene.GetRootGameObjects()
                     .SelectMany(root => root.GetComponentsInChildren<PreviewBusDrag>()).Single();
-                state.awakeCapturedAuthoredPosition =
-                    Vector3.Distance(bus.InitialPosition, state.authoredPosition) < PositionTolerance;
+                state.AwakeCapturedAuthoredPosition =
+                    Vector3.Distance(bus.InitialPosition, state.AuthoredPosition) < PositionTolerance;
                 bus.Position += Vector3.right * RuntimeOffset;
                 drag.ResetLayout();
-                state.resetReturnedToAuthoredPosition =
-                    Vector3.Distance(bus.Position, state.authoredPosition) < PositionTolerance;
+                state.ResetReturnedToAuthoredPosition =
+                    Vector3.Distance(bus.Position, state.AuthoredPosition) < PositionTolerance;
                 SaveState(state);
                 Finish(string.Empty);
             }
@@ -142,9 +143,9 @@ namespace LastExit.Editor.ArtLab
 
             try
             {
-                ProbeState state = JsonUtility.FromJson<ProbeState>(SessionState.GetString(StateKey, string.Empty));
-                state.error = error;
-                state.awaitingRestore = true;
+                ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(SessionState.GetString(StateKey, string.Empty));
+                state.Error = error;
+                state.AwaitingRestore = true;
                 SaveState(state);
                 WriteReport(state);
             }
@@ -171,14 +172,14 @@ namespace LastExit.Editor.ArtLab
                 return;
             }
 
-            ProbeState state = JsonUtility.FromJson<ProbeState>(json);
+            ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(json);
 
-            if (state.awaitingRestore)
+            if (state.AwaitingRestore)
             {
-                if (SceneManager.GetActiveScene().path != state.scene || SceneManager.sceneCount != 1)
+                if (SceneManager.GetActiveScene().path != state.Scene || SceneManager.sceneCount != 1)
                 {
                     EditorApplication.update -= RestoreWhenReady;
-                    state.error = "Automatic restoration stopped because the active scene setup changed.";
+                    state.Error = "Automatic restoration stopped because the active scene setup changed.";
                     SaveState(state);
                     WriteReport(state);
                     return;
@@ -192,36 +193,36 @@ namespace LastExit.Editor.ArtLab
         {
             string reports = ArtLabPreview.OutputRoot + "/Reports";
             Directory.CreateDirectory(reports);
-            File.WriteAllText(reports + "/authored_baseline_play_probe.json", JsonUtility.ToJson(state, true));
+            File.WriteAllText(reports + "/authored_baseline_play_probe.json", ArtLabReportJson.Serialize(state, true));
         }
 
         private static void RestoreSavedScene()
         {
-            ProbeState state = JsonUtility.FromJson<ProbeState>(SessionState.GetString(StateKey, string.Empty));
+            ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(SessionState.GetString(StateKey, string.Empty));
 
             try
             {
-                Scene restored = EditorSceneManager.OpenScene(state.scene, OpenSceneMode.Single);
+                Scene restored = EditorSceneManager.OpenScene(state.Scene, OpenSceneMode.Single);
                 PreviewBus bus = GetBuses(restored)[0];
-                state.savedSceneRestored = restored.isDirty == false &&
-                    Vector3.Distance(bus.Position, state.originalPosition) < PositionTolerance;
-                state.passed = state.awakeCapturedAuthoredPosition && state.resetReturnedToAuthoredPosition &&
-                    state.savedSceneRestored && string.IsNullOrEmpty(state.error);
+                state.SavedSceneRestored = restored.isDirty == false &&
+                    Vector3.Distance(bus.Position, state.OriginalPosition) < PositionTolerance;
+                state.Passed = state.AwakeCapturedAuthoredPosition && state.ResetReturnedToAuthoredPosition &&
+                    state.SavedSceneRestored && string.IsNullOrEmpty(state.Error);
             }
             catch (Exception exception)
             {
-                state.error = exception.ToString();
-                state.passed = false;
+                state.Error = exception.ToString();
+                state.Passed = false;
             }
             finally
             {
                 EditorApplication.update -= RestoreWhenReady;
-                EditorApplication.isPaused = state.previousPaused;
-                Application.runInBackground = state.previousRunInBackground;
-                state.awaitingRestore = false;
+                EditorApplication.isPaused = state.PreviousPaused;
+                Application.runInBackground = state.PreviousRunInBackground;
+                state.AwaitingRestore = false;
                 WriteReport(state);
 
-                if (state.savedSceneRestored)
+                if (state.SavedSceneRestored)
                 {
                     SessionState.EraseString(StateKey);
                 }
@@ -241,8 +242,8 @@ namespace LastExit.Editor.ArtLab
 
             if (change == PlayModeStateChange.EnteredPlayMode)
             {
-                ProbeState state = JsonUtility.FromJson<ProbeState>(SessionState.GetString(StateKey, string.Empty));
-                state.previousRunInBackground = Application.runInBackground;
+                ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(SessionState.GetString(StateKey, string.Empty));
+                state.PreviousRunInBackground = Application.runInBackground;
                 SaveState(state);
                 Application.runInBackground = true;
                 Type gameViewType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GameView");
@@ -255,13 +256,13 @@ namespace LastExit.Editor.ArtLab
             else if (change == PlayModeStateChange.ExitingPlayMode)
             {
                 EditorApplication.update -= Poll;
-                ProbeState state = JsonUtility.FromJson<ProbeState>(SessionState.GetString(StateKey, string.Empty));
-                Application.runInBackground = state.previousRunInBackground;
+                ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(SessionState.GetString(StateKey, string.Empty));
+                Application.runInBackground = state.PreviousRunInBackground;
             }
             else if (change == PlayModeStateChange.EnteredEditMode)
             {
-                ProbeState state = JsonUtility.FromJson<ProbeState>(SessionState.GetString(StateKey, string.Empty));
-                state.awaitingRestore = true;
+                ProbeState state = ArtLabReportJson.Deserialize<ProbeState>(SessionState.GetString(StateKey, string.Empty));
+                state.AwaitingRestore = true;
                 SaveState(state);
             }
         }
@@ -269,17 +270,28 @@ namespace LastExit.Editor.ArtLab
         [Serializable]
         private class ProbeState
         {
-            public string scene;
-            public Vector3 originalPosition;
-            public Vector3 authoredPosition;
-            public bool previousPaused;
-            public bool previousRunInBackground;
-            public bool awakeCapturedAuthoredPosition;
-            public bool resetReturnedToAuthoredPosition;
-            public bool savedSceneRestored;
-            public bool awaitingRestore;
-            public bool passed;
-            public string error;
+            [FormerlySerializedAs("scene")]
+            public string Scene;
+            [FormerlySerializedAs("originalPosition")]
+            public Vector3 OriginalPosition;
+            [FormerlySerializedAs("authoredPosition")]
+            public Vector3 AuthoredPosition;
+            [FormerlySerializedAs("previousPaused")]
+            public bool PreviousPaused;
+            [FormerlySerializedAs("previousRunInBackground")]
+            public bool PreviousRunInBackground;
+            [FormerlySerializedAs("awakeCapturedAuthoredPosition")]
+            public bool AwakeCapturedAuthoredPosition;
+            [FormerlySerializedAs("resetReturnedToAuthoredPosition")]
+            public bool ResetReturnedToAuthoredPosition;
+            [FormerlySerializedAs("savedSceneRestored")]
+            public bool SavedSceneRestored;
+            [FormerlySerializedAs("awaitingRestore")]
+            public bool AwaitingRestore;
+            [FormerlySerializedAs("passed")]
+            public bool Passed;
+            [FormerlySerializedAs("error")]
+            public string Error;
         }
     }
 }

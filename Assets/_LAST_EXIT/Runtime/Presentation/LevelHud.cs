@@ -38,6 +38,7 @@ namespace LastExit.Presentation
         [SerializeField, Min(.1f)] private float _rejectionHintSeconds = 1.2f;
         private ILevelReadout _game;
         private IPreviewHudLayout _hudLayout;
+        private IAudioOptionsLayout _audioOptionsLayout;
         private LevelDefinition _definition;
         private Camera _camera;
         private string _selected;
@@ -71,7 +72,7 @@ namespace LastExit.Presentation
         public RectTransform[] PointerRegions => new[]
         {
             _header, _footer, (RectTransform)_victoryPanel.transform, _security.PointerRegion,
-            _audioOptions != null ? _audioOptions.PointerRegion : _header
+            _audioOptionsLayout != null ? _audioOptionsLayout.PointerRegion : _header
         };
 
         private void OnEnable()
@@ -122,6 +123,7 @@ namespace LastExit.Presentation
             _game = game;
             _definition = definition;
             _hudLayout = _layout;
+            _audioOptionsLayout = _audioOptions;
             _securityEnabled = definition.CctvCharges > 0;
             _framing.Configure(definition.Rows.Count, _securityEnabled);
             _security.gameObject.SetActive(_securityEnabled);
@@ -370,7 +372,7 @@ namespace LastExit.Presentation
                 string.IsNullOrEmpty(_stopHints.Message));
             _stopHints.Project(cssScale, doorCalloutOffset);
             _security.ProjectTargets(cssScale);
-            _audioOptions?.RefreshLayout(cssScale, portrait);
+            _audioOptionsLayout?.RefreshLayout(cssScale, portrait);
         }
 
         private void ApplyCampaignLayout(float scale)
@@ -413,8 +415,8 @@ namespace LastExit.Presentation
 
             if (_portrait)
             {
-                float offset = _audioOptions != null ? 70 : 44;
-                float width = _audioOptions != null ? 144 : 92;
+                float offset = _audioOptionsLayout != null ? 70 : 44;
+                float width = _audioOptionsLayout != null ? 144 : 92;
                 _title.rectTransform.anchoredPosition += new Vector2(-offset / scale, 0);
                 _title.rectTransform.sizeDelta += new Vector2(-width / scale, 0);
                 _subtitle.rectTransform.anchoredPosition += new Vector2(-offset / scale, 0);

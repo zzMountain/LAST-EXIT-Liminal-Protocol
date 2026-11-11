@@ -682,7 +682,45 @@ namespace LastExit.Tests.Gameplay.PlayMode
                 Assert.That(_composition.Game.Snapshot.Generation, Is.GreaterThan(previousGeneration));
                 yield return new WaitForSeconds(1.3f);
                 AssertInitialAttempt();
-                Drag("L01-R1", 1, false);
+                LevelBusDrag drag = GetSceneComponent<LevelBusDrag>();
+                string activation = deactivateObject ? "GameObject reactivation" : "component re-enable";
+                Assert.IsTrue(_pointer.isActiveAndEnabled, activation + ": pointer reader must be enabled.");
+                Assert.IsTrue(drag.isActiveAndEnabled, activation + ": drag subscriber must be enabled.");
+                Assert.IsTrue(_composition.Game.CanSelect("L01-R1"), activation + ": the first bus must be selectable.");
+                Assert.IsFalse(_mouse.leftButton.isPressed, activation + ": the previous gesture must be released.");
+                Vector3 center = _board.GetBusBounds("L01-R1").center;
+                float deltaX = _board.GetWorldX(1) - _board.GetBus("L01-R1").position.x;
+                Vector2 from = Project(center);
+                Vector2 to = Project(center + Vector3.right * deltaX);
+
+                foreach (RectTransform region in _hud.PointerRegions)
+                {
+                    bool blocked = region.gameObject.activeInHierarchy &&
+                        RectTransformUtility.RectangleContainsScreenPoint(region, from, _camera);
+                    Assert.IsFalse(blocked, activation + ": bus press is blocked by " + region.name);
+                }
+
+                int presses = 0;
+                Action<Vector2> countPress = position => presses++;
+                _pointer.Pressed += countPress;
+
+                try
+                {
+                    QueueMouse(from, true);
+                    Assert.AreEqual(1, presses, activation + ": a fresh mouse press must reach the pointer reader.");
+                    Assert.AreEqual("L01-R1", drag.SelectedBusId, activation + ": press must select the rebuilt bus.");
+                    QueueMouse((from + to) * .5f, true);
+                    Assert.That(_board.GetBus("L01-R1").position.x,
+                        Is.EqualTo(_board.GetWorldX(2)).Within(.01f), activation + ": held movement must show its preview.");
+                    QueueMouse(to, false);
+                    Assert.AreEqual(1, _composition.Game.Snapshot.Rows[0].Bus.LeftX,
+                        activation + ": release must commit the requested stop.");
+                }
+                finally
+                {
+                    _pointer.Pressed -= countPress;
+                }
+
                 yield return Await(() => CountTrace("Board:") > 0);
                 Assert.AreEqual(1, _composition.Game.Snapshot.Rows[0].Bus.Occupied);
             }

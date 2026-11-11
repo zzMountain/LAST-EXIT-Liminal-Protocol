@@ -12,6 +12,7 @@ namespace LastExit.Editor.Gameplay
 {
     public class GameplayVerification : IErrorCallbacks
     {
+        private const string ResultsFolder = "TestResults";
         private const string RunCommand = "LAST EXIT/Gameplay/Run EditMode Tests";
         private const string RunPlayModeCommand = "LAST EXIT/Gameplay/Run PlayMode Tests";
         private const string RunPaceCommand = "LAST EXIT/Gameplay/Run Passenger Walking Regression";
@@ -19,8 +20,9 @@ namespace LastExit.Editor.Gameplay
         private const string RunStopPreviewCommand = "LAST EXIT/Gameplay/Run Stop Preview Regression";
         private const string ContextKey = "LastExit.Gameplay.Verification.Context";
         private const string RestoreContextKey = "LastExit.Gameplay.Verification.RestoreContext";
-        private const string ErrorRecoveryPrefix = "TestResults/FullAudit-RunnerError-Failure";
-        private const string ErrorRecoveryReport = "TestResults/FullAudit-RunnerError.txt";
+        private const string DefaultReportPrefix = ResultsFolder + "/FullFinal-20261108-";
+        private const string ErrorRecoveryPrefix = ResultsFolder + "/FullAudit-RunnerError-Failure";
+        private const string ErrorRecoveryReport = ResultsFolder + "/FullAudit-RunnerError.txt";
         private const string SyntheticFailure = "Synthetic runner error recovery diagnostic; no test was executed.";
         private static GameplayVerification s_active;
 
@@ -34,7 +36,7 @@ namespace LastExit.Editor.Gameplay
             _api = api;
             _setup = setup;
             _mode = mode;
-            _reportPrefix = string.IsNullOrEmpty(reportPrefix) ? "TestResults/FullFinal-20261108-" + mode : reportPrefix;
+            _reportPrefix = string.IsNullOrEmpty(reportPrefix) ? DefaultReportPrefix + mode : reportPrefix;
             s_active = this;
         }
 
@@ -103,7 +105,7 @@ namespace LastExit.Editor.Gameplay
 
             VerificationContext saved = JsonUtility.FromJson<VerificationContext>(context);
             string reportPrefix = string.IsNullOrEmpty(saved.ReportPrefix)
-                ? "TestResults/FullFinal-20261108-" + saved.Mode : saved.ReportPrefix;
+                ? DefaultReportPrefix + saved.Mode : saved.ReportPrefix;
             File.WriteAllText(reportPrefix + ".txt",
                 "INTERRUPTED: run exited before completion; no passing result claimed.");
             SessionState.EraseString(ContextKey);
@@ -188,7 +190,7 @@ namespace LastExit.Editor.Gameplay
             try
             {
                 api.RegisterCallbacks(callbacks);
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(ErrorRecoveryReport, "IN PROGRESS: " + SyntheticFailure);
                 File.WriteAllText(ErrorRecoveryPrefix + ".txt", "STARTING: " + SyntheticFailure);
                 SessionState.SetString(ContextKey, expectedSetup);
@@ -262,7 +264,7 @@ namespace LastExit.Editor.Gameplay
 
             try
             {
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(_reportPrefix + ".xml", result.ToXml().OuterXml);
                 File.WriteAllText(_reportPrefix + ".txt", summary);
             }
@@ -283,7 +285,7 @@ namespace LastExit.Editor.Gameplay
 
             try
             {
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(_reportPrefix + ".txt", "FAILED: " + message);
             }
             finally
@@ -334,7 +336,7 @@ namespace LastExit.Editor.Gameplay
                     assemblyNames = assemblies,
                     testNames = testNames.Length == 0 ? null : testNames
                 };
-                Directory.CreateDirectory("TestResults");
+                Directory.CreateDirectory(ResultsFolder);
                 File.WriteAllText(callbacks._reportPrefix + ".txt", "STARTING: " + string.Join(", ", assemblies));
                 File.WriteAllText(callbacks._reportPrefix + "-Progress.txt", string.Empty);
                 SessionState.SetString(ContextKey, SerializeContext(setup, mode, callbacks._reportPrefix));

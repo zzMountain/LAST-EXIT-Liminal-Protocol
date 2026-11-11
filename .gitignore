@@ -146,12 +146,9 @@ crashlytics-build.properties
 __pycache__/
 *.py[cod]
 
-# Local development history and agent output.
+# Local verification and authoring output.
 /*AUDIT*.md
 /SCENE_AUTHORING.md
-/AGENTS.md
-/.agents/
-/.codex/
 /output/
 /Tools/*
 !/Tools/Build-WebGL.ps1

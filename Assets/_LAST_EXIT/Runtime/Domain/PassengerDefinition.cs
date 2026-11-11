@@ -4,7 +4,10 @@ namespace LastExit.Domain
 {
     public class PassengerDefinition
     {
-        public PassengerDefinition(string id, string route, string kind = "human")
+        public const string HumanKind = "human";
+        public const string EchoKind = "echo";
+
+        public PassengerDefinition(string id, string route, string kind = HumanKind)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -16,7 +19,7 @@ namespace LastExit.Domain
                 throw new ArgumentException("Unknown passenger route.", nameof(route));
             }
 
-            if (kind != "human" && kind != "echo")
+            if (kind != HumanKind && kind != EchoKind)
             {
                 throw new ArgumentException("Unknown passenger kind.", nameof(kind));
             }

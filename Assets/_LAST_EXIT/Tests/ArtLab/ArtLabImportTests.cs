@@ -91,8 +91,8 @@ namespace LastExit.Tests.ArtLab
         {
             Scene scene = EditorSceneManager.OpenScene(ArtLabSceneBuilder.ScenePath, OpenSceneMode.Single);
             ArtLabSceneReport report = ArtLabPreview.WriteSceneReport();
-            Assert.That(report.passed, Is.True);
-            Assert.That(report.buildScenes.Any(path => path == ArtLabSceneBuilder.ScenePath), Is.False);
+            Assert.That(report.Passed, Is.True);
+            Assert.That(report.BuildScenes.Any(path => path == ArtLabSceneBuilder.ScenePath), Is.False);
             Assert.That(scene.GetRootGameObjects().Count(root => root.activeSelf &&
                 root.name.StartsWith(ArtLabSceneBuilder.LookPrefix)), Is.EqualTo(1));
             Assert.That(scene.GetRootGameObjects().SelectMany(root =>
