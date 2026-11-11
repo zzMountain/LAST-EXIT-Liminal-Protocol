@@ -1,0 +1,17 @@
+{
+    "name": "LastExit.Gameplay.Tests.PlayMode",
+    "rootNamespace": "LastExit.Tests.Gameplay.PlayMode",
+    "references": [
+        "LastExit.Domain",
+        "LastExit.Content",
+        "LastExit.Platform",
+        "LastExit.Presentation",
+        "LastExit.ArtLab.Preview",
+        "Unity.ugui",
+        "Unity.InputSystem",
+        "Unity.InputSystem.TestFramework"
+    ],
+    "includePlatforms": [],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "autoReferenced": false
+}

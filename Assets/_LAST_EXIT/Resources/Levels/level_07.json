@@ -1,0 +1,222 @@
+{
+  "schema_version": "0.4",
+  "status": "prototype_candidate",
+  "level_id": "LEVEL-07",
+  "level_index": 7,
+  "grid": {
+    "width": 12,
+    "corridors": {
+      "A": 2,
+      "B": 4,
+      "C": 6,
+      "D": 8
+    }
+  },
+  "queues": [
+    {
+      "id": "A",
+      "passengers": [
+        {
+          "id": "P07-A-01",
+          "route": "G",
+          "kind": "human"
+        },
+        {
+          "id": "P07-A-02",
+          "route": "B",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "passengers": [
+        {
+          "id": "P07-B-01",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P07-B-02",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P07-B-03",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P07-B-04",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P07-B-05",
+          "route": "T",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "passengers": [
+        {
+          "id": "P07-C-01",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P07-C-02",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P07-C-03",
+          "route": "B",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "passengers": [
+        {
+          "id": "P07-D-01",
+          "route": "G",
+          "kind": "echo"
+        },
+        {
+          "id": "P07-D-02",
+          "route": "G",
+          "kind": "human"
+        },
+        {
+          "id": "P07-D-03",
+          "route": "T",
+          "kind": "human"
+        }
+      ]
+    }
+  ],
+  "buses": [
+    {
+      "id": "P07-T",
+      "route": "T",
+      "class": "STANDARD",
+      "footprint_cells": 3,
+      "capacity": 4,
+      "initial_left_x": 4
+    },
+    {
+      "id": "P07-R",
+      "route": "R",
+      "class": "MINI",
+      "footprint_cells": 2,
+      "capacity": 2,
+      "initial_left_x": 0
+    },
+    {
+      "id": "P07-G",
+      "route": "G",
+      "class": "MINI",
+      "footprint_cells": 2,
+      "capacity": 2,
+      "initial_left_x": 4
+    },
+    {
+      "id": "V2-07-B",
+      "route": "B",
+      "class": "MINI",
+      "footprint_cells": 2,
+      "capacity": 2,
+      "initial_left_x": 0
+    },
+    {
+      "id": "V2-07-T",
+      "route": "T",
+      "class": "MINI",
+      "footprint_cells": 2,
+      "capacity": 2,
+      "initial_left_x": 0
+    }
+  ],
+  "rows": [
+    {
+      "id": "R1",
+      "initial_bus_id": "P07-T"
+    },
+    {
+      "id": "R2",
+      "initial_bus_id": "P07-R"
+    },
+    {
+      "id": "R3",
+      "initial_bus_id": "V2-07-B"
+    },
+    {
+      "id": "R4",
+      "initial_bus_id": "V2-07-T"
+    }
+  ],
+  "cctv_charges": 1,
+  "initial_stability": 3,
+  "target_cctv_uses": 1,
+  "reference_solution": [
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 3
+    },
+    {
+      "action": "move",
+      "row": "R2",
+      "left_x": 5
+    },
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 1
+    },
+    {
+      "action": "move",
+      "row": "R3",
+      "left_x": 5
+    },
+    {
+      "action": "move",
+      "row": "R4",
+      "left_x": 3
+    },
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 3
+    },
+    {
+      "action": "move",
+      "row": "R3",
+      "left_x": 1
+    },
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 7
+    },
+    {
+      "action": "scan"
+    },
+    {
+      "action": "quarantine",
+      "queue": "D"
+    },
+    {
+      "action": "move",
+      "row": "R4",
+      "left_x": 7
+    }
+  ],
+  "next_bus_queue": [
+    "P07-G"
+  ]
+}

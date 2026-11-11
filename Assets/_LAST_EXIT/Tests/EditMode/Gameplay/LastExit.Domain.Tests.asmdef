@@ -1,0 +1,8 @@
+{
+  "name": "LastExit.Domain.Tests",
+  "rootNamespace": "LastExit.Tests.Gameplay",
+  "references": ["LastExit.Domain"],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

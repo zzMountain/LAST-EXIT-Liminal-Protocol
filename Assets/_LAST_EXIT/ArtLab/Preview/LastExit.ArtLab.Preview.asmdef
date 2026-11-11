@@ -1,0 +1,6 @@
+{
+    "name": "LastExit.ArtLab.Preview",
+    "rootNamespace": "LastExit.ArtLab.Preview",
+    "references": ["Unity.ugui", "Unity.InputSystem"],
+    "autoReferenced": true
+}

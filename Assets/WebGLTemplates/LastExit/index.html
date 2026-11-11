@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>LAST EXIT · Liminal Protocol</title>
+  <style>
+    html,body { width:100%;height:100%;margin:0;overflow:hidden;background:#071015;color:#e6f2f4;font-family:Arial,sans-serif; }
+    #unity-canvas { position:fixed;display:block;width:100%;height:100%;touch-action:none;outline:none; }
+    #loading { position:fixed;inset:0;display:grid;place-content:center;gap:18px;text-align:center;background:#071015; }
+    #loading strong { letter-spacing:.18em; }
+    progress { width:230px;height:4px;accent-color:#28bccc; }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" tabindex="0" aria-label="LAST EXIT — игровое поле"></canvas>
+  <div id="loading"><strong>LAST EXIT</strong><span>Подготовка станции…</span><progress max="1" value="0"></progress></div>
+  <script src="platform.js"></script>
+  <script>
+    // The platform serves /sdk.js; a failed local request keeps the standalone preview playable.
+    window.LastExitPlatform.boot(() => new Promise((resolve, reject) => {
+      const sdkScript = document.createElement('script');
+      sdkScript.src = '/sdk.js';
+      sdkScript.onload = () => {
+        if (window.YaGames) window.YaGames.init().then(resolve, reject);
+        else reject(new Error('SDK unavailable'));
+      };
+      sdkScript.onerror = reject;
+      document.head.appendChild(sdkScript);
+    }));
+  </script>
+  <script src="Build/{{{ LOADER_FILENAME }}}"></script>
+  <script>
+    const canvas = document.getElementById('unity-canvas');
+    const loading = document.getElementById('loading');
+    canvas.addEventListener('contextmenu', event => event.preventDefault());
+    function fitViewport() {
+      const viewport = window.visualViewport;
+      const width = viewport ? viewport.width : window.innerWidth;
+      const height = viewport ? viewport.height : window.innerHeight;
+      canvas.style.width = Math.round(width) + 'px';
+      canvas.style.height = Math.round(height) + 'px';
+      canvas.style.left = (viewport ? viewport.offsetLeft : 0) + 'px';
+      canvas.style.top = (viewport ? viewport.offsetTop : 0) + 'px';
+    }
+    window.addEventListener('resize', fitViewport);
+    window.addEventListener('orientationchange', fitViewport);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', fitViewport);
+      window.visualViewport.addEventListener('scroll', fitViewport);
+    }
+    fitViewport();
+    createUnityInstance(canvas, {
+      dataUrl: 'Build/{{{ DATA_FILENAME }}}',
+      frameworkUrl: 'Build/{{{ FRAMEWORK_FILENAME }}}',
+      codeUrl: 'Build/{{{ CODE_FILENAME }}}',
+      streamingAssetsUrl: 'StreamingAssets',
+      companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+      productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+      productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+      devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2)
+    }, progress => loading.querySelector('progress').value = progress).then(instance => {
+      window.LastExitPlatform.loaderRemoved();
+      canvas.focus();
+    }).catch(() => {
+      loading.querySelector('span').textContent = 'Не удалось загрузить станцию. Обновите страницу.';
+    });
+  </script>
+</body>
+</html>

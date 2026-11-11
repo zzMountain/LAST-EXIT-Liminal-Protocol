@@ -1,0 +1,126 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a1175dc17836094b975ed2ceec05e4c, type: 3}
+  m_Name: HUD_Landscape
+  m_EditorClassIdentifier: 
+  _header:
+    _anchorMin: {x: 0.025, y: 0.24}
+    _anchorMax: {x: 0.235, y: 0.76}
+    _pivot: {x: 0.5, y: 0.5}
+    _position: {x: 0, y: 0}
+    _size: {x: 0, y: 0}
+  _footer:
+    _anchorMin: {x: 0.765, y: 0.24}
+    _anchorMax: {x: 0.975, y: 0.76}
+    _pivot: {x: 0.5, y: 0.5}
+    _position: {x: 0, y: 0}
+    _size: {x: 0, y: 0}
+  _reset:
+    _anchorMin: {x: 0, y: 0}
+    _anchorMax: {x: 1, y: 0}
+    _pivot: {x: 0.5, y: 0}
+    _position: {x: 0, y: 24}
+    _size: {x: -48, y: 54}
+  _headerText:
+  - _label: Station
+    _text: 'L-07
+
+      LAST EXIT'
+    _fontSize: 34
+    _fontStyle: 1
+    _alignment: 3
+    _color: {r: 0.9, g: 0.95, b: 0.96, a: 1}
+    _rect:
+      _anchorMin: {x: 0, y: 1}
+      _anchorMax: {x: 1, y: 1}
+      _pivot: {x: 0.5, y: 0.5}
+      _position: {x: 0, y: -64}
+      _size: {x: -48, y: 96}
+  - _label: Preview Boundary
+    _text: "UX-\u041F\u0420\u041E\u0411\u0410\n\u0411\u0415\u0417 \u0421\u0418\u041C\u0423\u041B\u042F\u0426\u0418\u0418"
+    _fontSize: 19
+    _fontStyle: 0
+    _alignment: 3
+    _color: {r: 0.58, g: 0.69, b: 0.73, a: 1}
+    _rect:
+      _anchorMin: {x: 0, y: 1}
+      _anchorMax: {x: 1, y: 1}
+      _pivot: {x: 0.5, y: 0.5}
+      _position: {x: 0, y: -157}
+      _size: {x: -48, y: 64}
+  - _label: Scene Counts
+    _text: "\u0412 \u041E\u0427\u0415\u0420\u0415\u0414\u042F\u0425   12\n\u0420\u042F\u0414\u041E\u0412             
+      5"
+    _fontSize: 22
+    _fontStyle: 0
+    _alignment: 3
+    _color: {r: 0.9, g: 0.95, b: 0.96, a: 1}
+    _rect:
+      _anchorMin: {x: 0, y: 1}
+      _anchorMax: {x: 1, y: 1}
+      _pivot: {x: 0.5, y: 0.5}
+      _position: {x: 0, y: -244}
+      _size: {x: -48, y: 66}
+  - _label: Reset Label
+    _text: "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C"
+    _fontSize: 22
+    _fontStyle: 0
+    _alignment: 4
+    _color: {r: 0.9, g: 0.95, b: 0.96, a: 1}
+    _rect:
+      _anchorMin: {x: 0, y: 0}
+      _anchorMax: {x: 1, y: 1}
+      _pivot: {x: 0.5, y: 0.5}
+      _position: {x: 0, y: 0}
+      _size: {x: -16, y: -8}
+  _footerText:
+  - _label: Drag Hint
+    _text: "\u0423\u041F\u0420\u0410\u0412\u041B\u0415\u041D\u0418\u0415\n\n\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435
+      \u0430\u0432\u0442\u043E\u0431\u0443\u0441.\n\u0422\u044F\u043D\u0438\u0442\u0435
+      \u0432\u043B\u0435\u0432\u043E\n\u0438\u043B\u0438 \u0432\u043F\u0440\u0430\u0432\u043E."
+    _fontSize: 24
+    _fontStyle: 0
+    _alignment: 3
+    _color: {r: 0.9, g: 0.95, b: 0.96, a: 1}
+    _rect:
+      _anchorMin: {x: 0, y: 1}
+      _anchorMax: {x: 1, y: 1}
+      _pivot: {x: 0.5, y: 0.5}
+      _position: {x: 0, y: -103}
+      _size: {x: -48, y: 160}
+  - _label: Arrivals Unconfigured
+    _text: "\u041F\u0420\u0418\u0411\u042B\u0422\u0418\u042F\n\u0421\u043B\u0435\u0434\u0443\u044E\u0449\u0438\u0439
+      \u0430\u0432\u0442\u043E\u0431\u0443\u0441\n\u043D\u0435 \u0437\u0430\u0434\u0430\u043D"
+    _fontSize: 19
+    _fontStyle: 0
+    _alignment: 3
+    _color: {r: 0.58, g: 0.69, b: 0.73, a: 1}
+    _rect:
+      _anchorMin: {x: 0, y: 1}
+      _anchorMax: {x: 1, y: 1}
+      _pivot: {x: 0.5, y: 0.5}
+      _position: {x: 0, y: -246}
+      _size: {x: -48, y: 78}
+  - _label: Safety Unavailable
+    _text: "CCTV / \u041A\u0410\u0420\u0410\u041D\u0422\u0418\u041D\n\u041D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B\n\u0432
+      UX-\u043F\u0440\u043E\u0431\u0435"
+    _fontSize: 19
+    _fontStyle: 0
+    _alignment: 3
+    _color: {r: 0.58, g: 0.69, b: 0.73, a: 1}
+    _rect:
+      _anchorMin: {x: 0, y: 1}
+      _anchorMax: {x: 1, y: 1}
+      _pivot: {x: 0.5, y: 0.5}
+      _position: {x: 0, y: -354}
+      _size: {x: -48, y: 78}
+  _minimumButtonPixels: 44

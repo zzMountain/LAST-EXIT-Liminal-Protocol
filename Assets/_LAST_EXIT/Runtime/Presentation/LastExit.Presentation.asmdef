@@ -1,0 +1,6 @@
+{
+    "name": "LastExit.Presentation",
+    "rootNamespace": "LastExit.Presentation",
+    "references": ["LastExit.Domain", "LastExit.Content", "LastExit.Platform", "LastExit.ArtLab.Preview", "Unity.ugui", "Unity.InputSystem"],
+    "autoReferenced": true
+}

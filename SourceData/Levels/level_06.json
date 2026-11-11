@@ -1,0 +1,259 @@
+{
+  "schema_version": "0.4",
+  "status": "prototype_candidate",
+  "level_id": "LEVEL-06",
+  "level_index": 6,
+  "grid": {
+    "width": 12,
+    "corridors": {
+      "A": 2,
+      "B": 4,
+      "C": 6,
+      "D": 8
+    }
+  },
+  "queues": [
+    {
+      "id": "A",
+      "passengers": [
+        {
+          "id": "P06-A-01",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P06-A-02",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P06-A-03",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P06-A-04",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P06-A-05",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P06-A-06",
+          "route": "R",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "passengers": [
+        {
+          "id": "P06-B-01",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P06-B-02",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P06-B-03",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P06-B-04",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P06-B-05",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P06-B-06",
+          "route": "T",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "C",
+      "passengers": [
+        {
+          "id": "P06-C-01",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P06-C-02",
+          "route": "R",
+          "kind": "human"
+        },
+        {
+          "id": "P06-C-03",
+          "route": "T",
+          "kind": "human"
+        },
+        {
+          "id": "P06-C-04",
+          "route": "T",
+          "kind": "human"
+        }
+      ]
+    },
+    {
+      "id": "D",
+      "passengers": [
+        {
+          "id": "P06-D-01",
+          "route": "G",
+          "kind": "echo"
+        },
+        {
+          "id": "P06-D-02",
+          "route": "G",
+          "kind": "human"
+        },
+        {
+          "id": "P06-D-03",
+          "route": "G",
+          "kind": "human"
+        },
+        {
+          "id": "P06-D-04",
+          "route": "G",
+          "kind": "human"
+        },
+        {
+          "id": "P06-D-05",
+          "route": "G",
+          "kind": "human"
+        }
+      ]
+    }
+  ],
+  "buses": [
+    {
+      "id": "P06-Ra",
+      "route": "R",
+      "class": "STANDARD",
+      "footprint_cells": 3,
+      "capacity": 4,
+      "initial_left_x": 3
+    },
+    {
+      "id": "P06-Ta",
+      "route": "T",
+      "class": "STANDARD",
+      "footprint_cells": 3,
+      "capacity": 4,
+      "initial_left_x": 1
+    },
+    {
+      "id": "P06-Rb",
+      "route": "R",
+      "class": "STANDARD",
+      "footprint_cells": 3,
+      "capacity": 4,
+      "initial_left_x": 0
+    },
+    {
+      "id": "P06-G",
+      "route": "G",
+      "class": "STANDARD",
+      "footprint_cells": 3,
+      "capacity": 4,
+      "initial_left_x": 0
+    },
+    {
+      "id": "P06-Tb",
+      "route": "T",
+      "class": "STANDARD",
+      "footprint_cells": 3,
+      "capacity": 4,
+      "initial_left_x": 0
+    }
+  ],
+  "rows": [
+    {
+      "id": "R1",
+      "initial_bus_id": "P06-Ra"
+    },
+    {
+      "id": "R2",
+      "initial_bus_id": "P06-Ta"
+    },
+    {
+      "id": "R3",
+      "initial_bus_id": "P06-Rb"
+    }
+  ],
+  "cctv_charges": 1,
+  "initial_stability": 3,
+  "target_cctv_uses": 1,
+  "reference_solution": [
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 1
+    },
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 5
+    },
+    {
+      "action": "move",
+      "row": "R2",
+      "left_x": 3
+    },
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 5
+    },
+    {
+      "action": "move",
+      "row": "R3",
+      "left_x": 3
+    },
+    {
+      "action": "move",
+      "row": "R1",
+      "left_x": 3
+    },
+    {
+      "action": "move",
+      "row": "R2",
+      "left_x": 3
+    },
+    {
+      "action": "move",
+      "row": "R3",
+      "left_x": 1
+    },
+    {
+      "action": "move",
+      "row": "R2",
+      "left_x": 7
+    },
+    {
+      "action": "scan"
+    },
+    {
+      "action": "quarantine",
+      "queue": "D"
+    }
+  ],
+  "next_bus_queue": [
+    "P06-Tb",
+    "P06-G"
+  ]
+}

@@ -1,0 +1,8 @@
+{
+    "name": "LastExit.Gameplay.Tests",
+    "rootNamespace": "LastExit.Tests.Gameplay",
+    "references": ["LastExit.Domain", "LastExit.Content", "LastExit.Presentation", "LastExit.Platform", "LastExit.ArtLab.Preview", "LastExit.Gameplay.Editor", "Unity.ugui", "Unity.InputSystem", "Unity.InputSystem.TestFramework"],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "autoReferenced": false
+}

@@ -1,0 +1,7 @@
+{
+  "name": "LastExit.Domain",
+  "rootNamespace": "LastExit.Domain",
+  "references": [],
+  "autoReferenced": true,
+  "noEngineReferences": true
+}
