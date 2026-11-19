@@ -16,12 +16,11 @@ namespace LastExit.Presentation
         private readonly IInspectionVideo _security;
         private readonly IStepCompletion _sequence;
         private readonly IChamberPhases _chamber;
-        private readonly IAudioMuteReadout _preferences;
         private readonly ILevelAudioReadout _game;
         private bool _subscribed;
         private bool _sessionEnabled = true;
         private bool _video;
-        private bool _securityCheck;
+        private int _anomalyVersion;
         private bool _victory;
         private bool _defeat;
         private int _stability;
@@ -30,7 +29,7 @@ namespace LastExit.Presentation
         public LevelAudioCueRouter(ILevelAudioPlayback playback, IControlActivation options,
             IPointerActivation pointer, ILevelDragFeedback drag, IControlActivation hud,
             IInspectionVideo security, IStepCompletion sequence, IChamberPhases chamber,
-            IAudioMuteReadout preferences, ILevelAudioReadout game)
+            ILevelAudioReadout game)
         {
             _playback = playback ?? throw new ArgumentNullException(nameof(playback));
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -40,7 +39,6 @@ namespace LastExit.Presentation
             _security = security ?? throw new ArgumentNullException(nameof(security));
             _sequence = sequence ?? throw new ArgumentNullException(nameof(sequence));
             _chamber = chamber ?? throw new ArgumentNullException(nameof(chamber));
-            _preferences = preferences ?? throw new ArgumentNullException(nameof(preferences));
             _game = game ?? throw new ArgumentNullException(nameof(game));
             CaptureBaseline(game.Snapshot);
             _playback.ResetTransient();
@@ -68,14 +66,13 @@ namespace LastExit.Presentation
             }
 
             _playback.SetPaused(enabled == false || _game.IsPaused);
-            ReportState();
         }
 
         private void CaptureBaseline(BoardSnapshot snapshot)
         {
             _generation = snapshot.Generation;
             _stability = snapshot.Stability;
-            _securityCheck = snapshot.HasSecurityCheck;
+            _anomalyVersion = 0;
             _victory = snapshot.IsVictory;
             _defeat = snapshot.IsDefeat;
             _video = false;
@@ -100,8 +97,6 @@ namespace LastExit.Presentation
             _security.VideoChanged += OnVideoChanged;
             _sequence.Completed += OnStepCompleted;
             _chamber.PhaseChanged += OnChamberPhaseChanged;
-            _playback.Played += OnSoundPlayed;
-            _preferences.Changed += ReportState;
             _subscribed = true;
         }
 
@@ -124,15 +119,7 @@ namespace LastExit.Presentation
             _security.VideoChanged -= OnVideoChanged;
             _sequence.Completed -= OnStepCompleted;
             _chamber.PhaseChanged -= OnChamberPhaseChanged;
-            _playback.Played -= OnSoundPlayed;
-            _preferences.Changed -= ReportState;
             _subscribed = false;
-        }
-
-        private void ReportState()
-        {
-            LevelAudioDiagnostics.ReportState(_playback.IsActivated, _playback.IsPaused,
-                _preferences.IsMuted, _playback.ActiveVoiceCount);
         }
 
         private void OnChanged()
@@ -144,7 +131,6 @@ namespace LastExit.Presentation
             {
                 _playback.ResetTransient();
                 CaptureBaseline(snapshot);
-                return;
             }
 
             if (snapshot.Stability < _stability)
@@ -152,9 +138,11 @@ namespace LastExit.Presentation
                 _playback.Play(LevelSound.StabilityLoss);
             }
 
-            if (snapshot.HasSecurityCheck && _securityCheck == false)
+            if (snapshot.AnomalyVersion > _anomalyVersion && _game.IsPaused == false &&
+                _sessionEnabled && _playback.IsActivated)
             {
                 _playback.Play(LevelSound.SecurityAlert);
+                _anomalyVersion = snapshot.AnomalyVersion;
             }
 
             if (snapshot.IsVictory && _victory == false)
@@ -168,23 +156,21 @@ namespace LastExit.Presentation
             }
 
             _stability = snapshot.Stability;
-            _securityCheck = snapshot.HasSecurityCheck;
             _victory = snapshot.IsVictory;
             _defeat = snapshot.IsDefeat;
-            ReportState();
         }
 
         private void OnPointerPressed(Vector2 position)
         {
             _playback.Activate();
-            ReportState();
+            OnChanged();
         }
 
         private void OnControlActivated()
         {
             _playback.Activate();
             _playback.Play(LevelSound.UiClick);
-            ReportState();
+            OnChanged();
         }
 
         private void OnSelectionChanged(string busId)
@@ -261,12 +247,6 @@ namespace LastExit.Presentation
                 case "Incinerating": _playback.Play(LevelSound.QuarantineDischarge); break;
                 case "Closing": _playback.Play(LevelSound.QuarantineClose); break;
             }
-        }
-
-        private void OnSoundPlayed(LevelSound sound)
-        {
-            LevelAudioDiagnostics.ReportCue(sound);
-            ReportState();
         }
     }
 }

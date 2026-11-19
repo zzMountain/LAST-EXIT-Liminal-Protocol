@@ -1,8 +1,0 @@
-{
-    "name": "LastExit.Platform.Tests.PlayMode",
-    "rootNamespace": "LastExit.Tests.Platform.PlayMode",
-    "references": ["LastExit.Platform"],
-    "includePlatforms": [],
-    "optionalUnityReferences": ["TestAssemblies"],
-    "autoReferenced": false
-}

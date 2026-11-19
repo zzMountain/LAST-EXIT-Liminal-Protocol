@@ -18,6 +18,18 @@
   <div id="loading"><strong>LAST EXIT</strong><span>Подготовка станции…</span><progress max="1" value="0"></progress></div>
   <script src="platform.js"></script>
   <script>
+    let stationLoadingFailed = false;
+    function localizeStationLoader(language) {
+      const russian = !language || String(language).toLowerCase().startsWith('ru');
+      const overlay = document.getElementById('loading');
+      document.documentElement.lang = russian ? 'ru' : 'en';
+      document.getElementById('unity-canvas').setAttribute('aria-label',
+        russian ? 'LAST EXIT — игровое поле' : 'LAST EXIT — game board');
+      if (overlay) overlay.querySelector('span').textContent = stationLoadingFailed
+        ? russian ? 'Не удалось загрузить станцию. Обновите страницу.' : 'Station could not load. Refresh the page.'
+        : russian ? 'Подготовка станции…' : 'Preparing the station…';
+    }
+    localizeStationLoader(navigator.language);
     // The platform serves /sdk.js; a failed local request keeps the standalone preview playable.
     window.LastExitPlatform.boot(() => new Promise((resolve, reject) => {
       const sdkScript = document.createElement('script');
@@ -28,7 +40,7 @@
       };
       sdkScript.onerror = reject;
       document.head.appendChild(sdkScript);
-    }));
+    })).then(() => localizeStationLoader(window.LastExitPlatform.diagnostics.language));
   </script>
   <script src="Build/{{{ LOADER_FILENAME }}}"></script>
   <script>
@@ -64,7 +76,8 @@
       window.LastExitPlatform.loaderRemoved();
       canvas.focus();
     }).catch(() => {
-      loading.querySelector('span').textContent = 'Не удалось загрузить станцию. Обновите страницу.';
+      stationLoadingFailed = true;
+      localizeStationLoader(window.LastExitPlatform.diagnostics.language);
     });
   </script>
 </body>

@@ -1,7 +1,0 @@
-{
-    "name": "LastExit.Gameplay.Editor",
-    "rootNamespace": "LastExit.Editor.Gameplay",
-    "references": ["LastExit.Domain", "LastExit.Content", "LastExit.Platform", "LastExit.Presentation", "LastExit.ArtLab.Editor", "LastExit.ArtLab.Preview", "Unity.ugui", "Unity.InputSystem", "UnityEditor.TestRunner", "UnityEngine.TestRunner", "Unity.RenderPipelines.Core.Runtime", "Unity.RenderPipelines.Universal.Runtime"],
-    "includePlatforms": ["Editor"],
-    "autoReferenced": true
-}

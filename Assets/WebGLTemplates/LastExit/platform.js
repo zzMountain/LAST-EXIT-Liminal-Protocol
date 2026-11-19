@@ -12,6 +12,7 @@
     let progress = null;
     let localReadState = 'unread';
     let loaded = false;
+    let languageReady = false;
     let cloudReadable = false;
     let cloudWriting = false;
     let pendingCloud = null;
@@ -31,6 +32,15 @@
 
     function notify(method, payload) {
         if (send && target) send(target, method, String(payload));
+    }
+
+    function selectStartupLanguage(requestedLanguage) {
+        const code = typeof requestedLanguage === 'string' ? requestedLanguage.trim().toLowerCase() : '';
+        diagnostics.requestedLanguage = requestedLanguage || null;
+        diagnostics.language = code === '' || code === 'ru' || code.startsWith('ru-') || code.startsWith('ru_') ? 'ru' : 'en';
+        if (root.document.documentElement) root.document.documentElement.lang = diagnostics.language;
+        languageReady = true;
+        notify('ReceiveLanguage', diagnostics.language);
     }
 
     function reportStorage(status) {
@@ -56,12 +66,15 @@
         if (completed.some(index => !Number.isInteger(index) || index < 0 || index >= levelCount) ||
             new Set(completed).size !== completed.length) return null;
         const results = value.bestResults === undefined || value.bestResults === null ? [] : value.bestResults;
+        if ((value.anomalyHintShown !== undefined && typeof value.anomalyHintShown !== 'boolean') ||
+            (value.quarantineHintShown !== undefined && typeof value.quarantineHintShown !== 'boolean')) return null;
         if (!Array.isArray(results) || results.some(result => !result || !completed.includes(result.levelIndex) ||
             !Number.isInteger(result.levelIndex) || !Number.isInteger(result.stars) || result.stars < 1 || result.stars > 3 ||
             !Number.isInteger(result.cctvUses) || result.cctvUses < 0 || !Number.isInteger(result.emergencyResets) ||
             result.emergencyResets < 0 || !Number.isInteger(result.lostSeats) || result.lostSeats < 0) ||
             new Set(results.map(result => result.levelIndex)).size !== results.length) return null;
         return { version: 1, currentLevel: value.currentLevel, completedLevels: completed.slice().sort((a, b) => a - b),
+            anomalyHintShown: value.anomalyHintShown === true, quarantineHintShown: value.quarantineHintShown === true,
             bestResults: results.map(result => ({ levelIndex: result.levelIndex, stars: result.stars,
                 cctvUses: result.cctvUses, emergencyResets: result.emergencyResets, lostSeats: result.lostSeats })) };
     }
@@ -84,6 +97,8 @@
             if (!previous || isBetter(result, previous)) results.set(result.levelIndex, result);
         }
         return { version: 1, currentLevel: Math.max(local.currentLevel, cloud.currentLevel), completedLevels: completed,
+            anomalyHintShown: local.anomalyHintShown || cloud.anomalyHintShown,
+            quarantineHintShown: local.quarantineHintShown || cloud.quarantineHintShown,
             bestResults: Array.from(results.values()).sort((a, b) => a.levelIndex - b.levelIndex) };
     }
 
@@ -155,15 +170,18 @@
     }
 
     function markReadyIfPossible() {
-        if (!sdk || !sceneReady || !loaderGone || readySent) return;
-        if (sdk.features && sdk.features.LoadingAPI) sdk.features.LoadingAPI.ready();
-        readySent = true;
-        diagnostics.ready = true;
+        if (!sdk || !sceneReady || !loaderGone) return;
+        const loading = sdk.features && sdk.features.LoadingAPI;
+        if (!readySent && loading && typeof loading.ready === 'function') {
+            loading.ready();
+            readySent = true;
+            diagnostics.ready = true;
+        }
         applyGameplay();
     }
 
     function applyGameplay() {
-        if (!sdk || !readySent) return;
+        if (!sdk || !sceneReady || !loaderGone) return;
         const active = wantsGameplay && reasons.size === 0;
         if (active === gameplaySent) return;
         const api = sdk.features && sdk.features.GameplayAPI;
@@ -176,12 +194,9 @@
         try {
             sdk = await bounded(loadSdk(), 5000);
             diagnostics.sdk = 'ready';
-            // This release declares Russian only; read the SDK locale during startup even for one language.
-            const requestedLanguage = sdk.environment && sdk.environment.i18n ? sdk.environment.i18n.lang : 'ru';
-            const supportedLanguages = ['ru'];
-            diagnostics.requestedLanguage = requestedLanguage;
-            diagnostics.language = supportedLanguages.includes(requestedLanguage) ? requestedLanguage : 'ru';
-            if (root.document.documentElement) root.document.documentElement.lang = diagnostics.language;
+            // Read the platform's startup locale before player/progress loading creates any Unity screen.
+            const sdkLanguage = sdk.environment && sdk.environment.i18n ? sdk.environment.i18n.lang : null;
+            selectStartupLanguage(sdkLanguage || (root.navigator && root.navigator.language));
             sdk.on('game_api_pause', () => {
                 if (reasons.has('sdk')) return;
                 // SDK already stops its gameplay markup; mirror it before Unity feeds back effective pause.
@@ -199,6 +214,8 @@
             });
             markReadyIfPossible();
         } catch (_) { diagnostics.sdk = 'unavailable-local-only'; }
+
+        if (!languageReady) selectStartupLanguage(root.navigator && root.navigator.language);
 
         if (sdk) {
             try {
@@ -220,8 +237,9 @@
         } else { reportStorage('local-only'); }
 
         progress = merge(local, cloud) || { version: 1, currentLevel: 0, completedLevels: [], bestResults: [] };
-        // Cache valid cloud recovery only when the primary local key is safe to write.
-        if (!local && cloud) writeLocal();
+        // Cache the accepted merge, including newer cloud progress over an older valid cache.
+        // writeLocal preserves rejected/future or unreadable primary bytes.
+        if (cloud) writeLocal();
         loaded = true;
         notify('ReceiveProgress', JSON.stringify(progress));
     }
@@ -238,6 +256,7 @@
             levelCount = count;
             notify('ReceivePause', reasons.size > 0 ? '1' : '0');
             notify('ReceiveStorageStatus', diagnostics.storage);
+            if (languageReady) notify('ReceiveLanguage', diagnostics.language);
             if (loaded) notify('ReceiveProgress', JSON.stringify(progress));
         },
         markReady() { sceneReady = true; diagnostics.sceneReady = true; markReadyIfPossible(); },
@@ -255,7 +274,9 @@
         save(json) {
             const next = decode(json);
             if (!loaded || !next) return;
-            progress = merge(progress, next);
+            // Another tab for this owner may have committed since this page loaded.
+            // Re-read before replacing the shared checkpoint so completion/best/hint flags stay monotonic.
+            progress = merge(merge(progress, readLocal()), next);
             // currentLevel is an explicit checkpoint; the completion set alone uses monotonic merge.
             progress.currentLevel = next.currentLevel;
             const localSaved = writeLocal();

@@ -1,8 +1,0 @@
-{
-    "name": "LastExit.Platform.Tests",
-    "rootNamespace": "LastExit.Tests.Platform",
-    "references": ["LastExit.Platform"],
-    "includePlatforms": ["Editor"],
-    "optionalUnityReferences": ["TestAssemblies"],
-    "autoReferenced": false
-}

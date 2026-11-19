@@ -170,35 +170,6 @@
   "cctv_charges": 1,
   "initial_stability": 3,
   "target_cctv_uses": 1,
-  "reference_solution": [
-    {
-      "action": "move",
-      "row": "R1",
-      "left_x": 7
-    },
-    {
-      "action": "move",
-      "row": "R1",
-      "left_x": 5
-    },
-    {
-      "action": "move",
-      "row": "R2",
-      "left_x": 3
-    },
-    {
-      "action": "move",
-      "row": "R3",
-      "left_x": 1
-    },
-    {
-      "action": "scan"
-    },
-    {
-      "action": "quarantine",
-      "queue": "A"
-    }
-  ],
   "next_bus_queue": [
     "P04-B"
   ]

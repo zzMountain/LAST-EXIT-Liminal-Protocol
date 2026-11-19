@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace LastExit.Presentation
@@ -22,30 +23,10 @@ namespace LastExit.Presentation
         private bool _subscribed;
         private int _nextVoice;
         private float _dragRemaining;
-
-        public event Action<LevelSound> Played;
+        private Coroutine _dragTailRoutine;
 
         public bool IsPaused { get; private set; }
         public bool IsActivated { get; private set; }
-        public int EmissionCount { get; private set; }
-
-        public int ActiveVoiceCount
-        {
-            get
-            {
-                int count = 0;
-
-                foreach (AudioSource voice in _voices)
-                {
-                    if (voice != null && voice.isPlaying)
-                    {
-                        count++;
-                    }
-                }
-
-                return count;
-            }
-        }
 
         private void OnEnable()
         {
@@ -55,28 +36,13 @@ namespace LastExit.Presentation
         private void OnDisable()
         {
             Unsubscribe();
+            CancelDragTail();
             StopAllSources();
             Array.Clear(_wantedLoops, 0, LoopCount);
             Array.Clear(_pausedLoops, 0, LoopCount);
             Array.Clear(_runningLoops, 0, LoopCount);
-            _dragRemaining = 0;
             IsActivated = false;
             IsPaused = false;
-        }
-
-        private void Update()
-        {
-            if (_dragRemaining <= 0)
-            {
-                return;
-            }
-
-            _dragRemaining -= Time.unscaledDeltaTime;
-
-            if (_dragRemaining <= 0)
-            {
-                SetLoop(LevelSound.BusDrag, false);
-            }
         }
 
         public void Initialize(IAudioLevels levels)
@@ -87,13 +53,12 @@ namespace LastExit.Presentation
             }
 
             ValidateSources();
+            CancelDragTail();
             Unsubscribe();
             StopAllSources();
             _levels = levels;
             IsActivated = false;
             IsPaused = false;
-            EmissionCount = 0;
-            _dragRemaining = 0;
             _nextVoice = 0;
             Array.Clear(_wantedLoops, 0, LoopCount);
             Array.Clear(_pausedLoops, 0, LoopCount);
@@ -170,8 +135,6 @@ namespace LastExit.Presentation
             voice.Play();
             _lastPlayed[soundIndex] = now;
             _nextVoice = (voiceIndex + 1) % VoiceCount;
-            EmissionCount++;
-            Played?.Invoke(sound);
         }
 
         public void SetLoop(LevelSound sound, bool wanted)
@@ -182,6 +145,12 @@ namespace LastExit.Presentation
             }
 
             int index = (int)sound;
+
+            if (sound == LevelSound.BusDrag && wanted == false)
+            {
+                CancelDragTail();
+            }
+
             _wantedLoops[index] = wanted;
 
             if (_levels != null)
@@ -201,7 +170,6 @@ namespace LastExit.Presentation
 
             if (paused)
             {
-                _dragRemaining = 0;
                 SetLoop(LevelSound.BusDrag, false);
                 StopVoices();
 
@@ -222,7 +190,6 @@ namespace LastExit.Presentation
 
         public void ResetTransient()
         {
-            _dragRemaining = 0;
             StopVoices();
             SetLoop(LevelSound.BusDrag, false);
             SetLoop(LevelSound.ScanLoop, false);
@@ -237,11 +204,39 @@ namespace LastExit.Presentation
 
             _dragRemaining = DragTailSeconds;
             SetLoop(LevelSound.BusDrag, true);
+
+            if (_dragTailRoutine == null)
+            {
+                _dragTailRoutine = StartCoroutine(AwaitDragTail());
+            }
         }
 
         private static bool IsLoop(LevelSound sound)
         {
             return sound >= LevelSound.Atmosphere && (int)sound < LoopCount;
+        }
+
+        private IEnumerator AwaitDragTail()
+        {
+            while (_dragRemaining > 0)
+            {
+                yield return null;
+                _dragRemaining = Mathf.Max(0, _dragRemaining - Time.unscaledDeltaTime);
+            }
+
+            _dragTailRoutine = null;
+            SetLoop(LevelSound.BusDrag, false);
+        }
+
+        private void CancelDragTail()
+        {
+            if (_dragTailRoutine != null)
+            {
+                StopCoroutine(_dragTailRoutine);
+                _dragTailRoutine = null;
+            }
+
+            _dragRemaining = 0;
         }
 
         private void ValidateSources()
@@ -345,8 +340,6 @@ namespace LastExit.Presentation
             {
                 source.Play();
                 _runningLoops[index] = true;
-                EmissionCount++;
-                Played?.Invoke(sound);
             }
         }
 

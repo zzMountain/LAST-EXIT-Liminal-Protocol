@@ -93,23 +93,6 @@
   "cctv_charges": 0,
   "initial_stability": 3,
   "target_cctv_uses": 0,
-  "reference_solution": [
-    {
-      "action": "move",
-      "row": "R1",
-      "left_x": 1
-    },
-    {
-      "action": "move",
-      "row": "R1",
-      "left_x": 3
-    },
-    {
-      "action": "move",
-      "row": "R2",
-      "left_x": 3
-    }
-  ],
   "next_bus_queue": [
     "L02-T1"
   ]

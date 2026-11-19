@@ -1,7 +1,0 @@
-{
-    "name": "LastExit.ArtLab.Editor",
-    "rootNamespace": "LastExit.Editor.ArtLab",
-    "references": ["Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime", "UnityEditor.TestRunner", "UnityEngine.TestRunner", "LastExit.ArtLab.Preview", "Unity.ugui", "Unity.InputSystem"],
-    "includePlatforms": ["Editor"],
-    "autoReferenced": true
-}

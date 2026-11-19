@@ -120,43 +120,6 @@
   "cctv_charges": 0,
   "initial_stability": 3,
   "target_cctv_uses": 0,
-  "reference_solution": [
-    {
-      "action": "move",
-      "row": "R1",
-      "left_x": 3
-    },
-    {
-      "action": "move",
-      "row": "R2",
-      "left_x": 1
-    },
-    {
-      "action": "move",
-      "row": "R2",
-      "left_x": 5
-    },
-    {
-      "action": "move",
-      "row": "R1",
-      "left_x": 5
-    },
-    {
-      "action": "move",
-      "row": "R3",
-      "left_x": 3
-    },
-    {
-      "action": "move",
-      "row": "R2",
-      "left_x": 3
-    },
-    {
-      "action": "move",
-      "row": "R3",
-      "left_x": 1
-    }
-  ],
   "next_bus_queue": [
     "P03-Tb"
   ]

@@ -19,6 +19,8 @@ namespace LastExit.Presentation
         private LevelAudioCueRouter _router;
         private bool _sessionEnabled = true;
 
+        public IAudioSettings Settings => _preferences;
+
         private void OnEnable()
         {
             if (_router != null)
@@ -44,9 +46,16 @@ namespace LastExit.Presentation
 
             _router?.Disable();
             _preferences = _preferences ?? new AudioPreferences();
+            bool activated = _playback.IsActivated;
             InitializePlayback();
+
+            if (activated)
+            {
+                _playback.Activate();
+            }
+
             _router = new LevelAudioCueRouter(_playback, _options, _pointer, _drag, _hud,
-                _security, _sequence, _chamber, _preferences, game);
+                _security, _sequence, _chamber, game);
             _router.SetSessionEnabled(_sessionEnabled);
 
             if (isActiveAndEnabled)
@@ -59,6 +68,11 @@ namespace LastExit.Presentation
         {
             _sessionEnabled = enabled;
             _router?.SetSessionEnabled(enabled);
+        }
+
+        public void ActivateFromControl()
+        {
+            _playback.Activate();
         }
 
         private void InitializePlayback()

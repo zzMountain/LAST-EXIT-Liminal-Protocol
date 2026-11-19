@@ -12,8 +12,9 @@ namespace LastExit.Domain
         private const int ProvisionalDoorOffset = 1;
 
         private readonly LevelDefinition _definition;
+        private readonly bool _boardingBeatEnabled;
+        private readonly string[] _observedEchoHeads;
         private readonly Dictionary<string, BusDefinition> _buses = new Dictionary<string, BusDefinition>();
-        private readonly List<string> _trace = new List<string>();
         private readonly List<BoardStep> _boardingSteps = new List<BoardStep>();
         private readonly string[] _activeBusIds;
         private readonly Dictionary<string, int> _lostSeatsByBus = new Dictionary<string, int>();
@@ -34,15 +35,19 @@ namespace LastExit.Domain
         private int _cctvUses;
         private int _stability;
         private int _emergencyResets;
+        private bool _hasContinuedBoardingBeat;
+        private bool _hasQueuedScan;
+        private int _anomalyVersion;
 
-        public BoardSession(LevelDefinition definition)
+        public BoardSession(LevelDefinition definition, bool? boardingBeatEnabled = null)
         {
             _definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            _boardingBeatEnabled = boardingBeatEnabled ?? definition.UsesBoardingBeat;
+            _observedEchoHeads = new string[definition.Queues.Count];
             _heads = new int[definition.Queues.Count];
             _activeBusIds = new string[definition.Rows.Count];
             _leftPositions = new int[definition.Rows.Count];
             _occupancies = new int[definition.Rows.Count];
-            Trace = _trace.AsReadOnly();
             BoardingSteps = _boardingSteps.AsReadOnly();
 
             foreach (BusDefinition bus in definition.Buses)
@@ -56,11 +61,10 @@ namespace LastExit.Domain
 
         public BoardStep PendingStep { get; private set; }
 
+        public bool IsAwaitingBoardingBeat { get; private set; }
+
         /// <summary>Active immutable boarding commands, ordered by queue A to D.</summary>
         public IReadOnlyList<BoardStep> BoardingSteps { get; }
-
-        /// <summary>A live read-only diagnostic trace, cleared by Restart.</summary>
-        public IReadOnlyList<string> Trace { get; }
 
         public bool CanMove => _isVictory == false && _isDefeat == false && _securityQueueIndex < 0 &&
             (PendingStep == null || PendingStep.Kind == BoardStepKind.Board);
@@ -71,6 +75,20 @@ namespace LastExit.Domain
 
         private bool CanAct => PendingStep == null && _isVictory == false && _isDefeat == false;
 
+        /// <summary>The gameplay clock calls this once the neutral interval has elapsed.</summary>
+        public bool TryContinueBoardingBeat()
+        {
+            if (CanAct == false || IsAwaitingBoardingBeat == false)
+            {
+                return false;
+            }
+
+            IsAwaitingBoardingBeat = false;
+            _hasContinuedBoardingBeat = true;
+            Resolve(continueBoardingPhase: true);
+            return true;
+        }
+
         public bool TryScan()
         {
             if (CanAct == false || _cctvCharges <= 0)
@@ -79,6 +97,25 @@ namespace LastExit.Domain
             }
 
             IssueStep(BoardStepKind.Scan);
+
+            if (_boardingBeatEnabled)
+            {
+                CommitScan();
+            }
+
+            return true;
+        }
+
+        /// <summary>Reserves intent only; the charge is spent at the next safe common boundary.</summary>
+        public bool TryQueueScan()
+        {
+            if (_boardingBeatEnabled == false || _boardingSteps.Count == 0 || _cctvCharges <= 0
+                || _isVictory || _isDefeat)
+            {
+                return false;
+            }
+
+            _hasQueuedScan = true;
             return true;
         }
 
@@ -121,7 +158,6 @@ namespace LastExit.Domain
             if (PendingStep != null)
             {
                 // Active walkers retain their immutable commands and stationary doors.
-                _trace.Add("Moved:" + GetCurrentBus(rowIndex).Id + ":" + leftX);
                 Resolve();
                 return true;
             }
@@ -207,28 +243,24 @@ namespace LastExit.Domain
             switch (completed.Kind)
             {
                 case BoardStepKind.Move:
-                    CommitMove(completed);
+                case BoardStepKind.Arrive:
+                    Resolve();
                     break;
                 case BoardStepKind.Depart:
                     CommitDeparture(completed);
                     break;
-                case BoardStepKind.Arrive:
-                    CommitArrival(completed);
-                    break;
-                case BoardStepKind.Victory:
-                    _trace.Add("Victory");
-                    break;
                 case BoardStepKind.Scan:
-                    CommitScan();
+                    if (_boardingBeatEnabled == false)
+                    {
+                        CommitScan();
+                    }
+
                     break;
                 case BoardStepKind.Quarantine:
                     CommitIsolation(completed);
                     break;
                 case BoardStepKind.Corruption:
                     CommitIsolation(completed);
-                    break;
-                case BoardStepKind.Defeat:
-                    _trace.Add("Defeat");
                     break;
             }
 
@@ -243,12 +275,16 @@ namespace LastExit.Domain
             _isVictory = false;
             _isDefeat = false;
             _hasDeferredSecurityCheck = false;
+            IsAwaitingBoardingBeat = false;
+            _hasContinuedBoardingBeat = false;
+            _hasQueuedScan = false;
+            _anomalyVersion = 0;
+            Array.Clear(_observedEchoHeads, 0, _observedEchoHeads.Length);
             _securityQueueIndex = -1;
             _cctvCharges = _definition.CctvCharges;
             _cctvUses = 0;
             _stability = _definition.InitialStability;
             _emergencyResets = 0;
-            _trace.Clear();
             Array.Clear(_heads, 0, _heads.Length);
             _reserveIndex = 0;
             _lostSeats = 0;
@@ -311,7 +347,7 @@ namespace LastExit.Domain
 
             return new BoardSnapshot(_generation, _isVictory, rows, queues, _cctvCharges, _cctvUses,
                 _stability, _emergencyResets, _isDefeat, _securityQueueIndex >= 0, reserve, _lostSeats,
-                _lastIsolationResult, _isolationCount);
+                _lastIsolationResult, _isolationCount, IsAwaitingBoardingBeat, _anomalyVersion);
         }
 
         public bool IsCctvAnomaly(string queueId)
@@ -391,20 +427,6 @@ namespace LastExit.Domain
         {
             _cctvCharges--;
             _cctvUses++;
-
-            _trace.Add("CctvViewed");
-        }
-
-        private void CommitMove(BoardStep completed)
-        {
-            _trace.Add("Moved:" + completed.BusId + ":" + completed.ToLeftX);
-            Resolve();
-        }
-
-        private void CommitArrival(BoardStep completed)
-        {
-            _trace.Add("BusArrived:" + completed.BusId);
-            Resolve();
         }
 
         private void CommitIsolation(BoardStep completed)
@@ -417,11 +439,16 @@ namespace LastExit.Domain
             _heads[queueIndex]++;
             _securityQueueIndex = -1;
 
+            if (_boardingBeatEnabled && completed.Kind == BoardStepKind.Quarantine)
+            {
+                IsAwaitingBoardingBeat = false;
+                _hasContinuedBoardingBeat = false;
+            }
+
             if (completed.Kind == BoardStepKind.Corruption)
             {
                 _stability--;
                 _emergencyResets++;
-                _trace.Add("CorruptionReset:" + completed.PassengerId);
 
                 if (_stability == 0)
                 {
@@ -434,7 +461,6 @@ namespace LastExit.Domain
             {
                 AssignLostSeat(passenger.Route);
                 _stability--;
-                _trace.Add("HumanIncinerated:" + completed.PassengerId);
 
                 if (_stability == 0)
                 {
@@ -442,10 +468,6 @@ namespace LastExit.Domain
                     IssueStep(BoardStepKind.Defeat);
                     return;
                 }
-            }
-            else
-            {
-                _trace.Add("Quarantined:" + completed.PassengerId);
             }
 
             _hasDeferredSecurityCheck = FindReadyEchoQueue() >= 0;
@@ -458,7 +480,6 @@ namespace LastExit.Domain
             int queueIndex = FindQueueIndex(completed.QueueId);
             _heads[queueIndex]++;
             _occupancies[rowIndex]++;
-            _trace.Add("Board:" + completed.PassengerId);
             _hasDeferredSecurityCheck = FindReadyEchoQueue() >= 0;
             Resolve(continueBoardingPhase: true);
         }
@@ -466,7 +487,6 @@ namespace LastExit.Domain
         private void CommitDeparture(BoardStep completed)
         {
             int rowIndex = FindRowIndex(completed.RowId);
-            _trace.Add("BusDeparted:" + completed.BusId);
             _activeBusIds[rowIndex] = null;
             _occupancies[rowIndex] = 0;
 
@@ -481,6 +501,27 @@ namespace LastExit.Domain
                 return;
             }
 
+            ObserveAnomalyHeads();
+
+            if (_hasQueuedScan)
+            {
+                _hasQueuedScan = false;
+                IsAwaitingBoardingBeat = true;
+                TryScan();
+                return;
+            }
+
+            if (_boardingBeatEnabled && IsAwaitingBoardingBeat)
+            {
+                return;
+            }
+
+            if (_boardingBeatEnabled && FindReadyEchoQueue() >= 0)
+            {
+                DispatchBoardingBeat();
+                return;
+            }
+
             if (continueBoardingPhase)
             {
                 if (TryIssueDeferredSecurityCheck())
@@ -490,7 +531,8 @@ namespace LastExit.Domain
 
                 DispatchBoarding();
 
-                if (_boardingSteps.Count > 0 || _securityQueueIndex >= 0)
+                if (_boardingSteps.Count > 0 || _securityQueueIndex >= 0 || PendingStep != null
+                    || IsAwaitingBoardingBeat)
                 {
                     return;
                 }
@@ -526,7 +568,8 @@ namespace LastExit.Domain
 
             DispatchBoarding();
 
-            if (_boardingSteps.Count > 0 || _securityQueueIndex >= 0)
+            if (_boardingSteps.Count > 0 || _securityQueueIndex >= 0 || PendingStep != null
+                || IsAwaitingBoardingBeat)
             {
                 return;
             }
@@ -553,6 +596,11 @@ namespace LastExit.Domain
 
         private bool TryIssueDeferredSecurityCheck()
         {
+            if (_boardingBeatEnabled)
+            {
+                return false;
+            }
+
             if (_hasDeferredSecurityCheck == false)
             {
                 return false;
@@ -567,7 +615,6 @@ namespace LastExit.Domain
             }
 
             _securityQueueIndex = queueIndex;
-            _trace.Add("SecurityCheck:" + GetHead(queueIndex).Id);
             return true;
         }
 
@@ -589,6 +636,12 @@ namespace LastExit.Domain
 
         private void DispatchBoarding()
         {
+            if (_boardingBeatEnabled)
+            {
+                DispatchBoardingBeat();
+                return;
+            }
+
             for (int queueIndex = 0; queueIndex < _definition.Queues.Count; queueIndex++)
             {
                 string queueId = _definition.Queues[queueIndex].Id;
@@ -609,13 +662,82 @@ namespace LastExit.Domain
                     if (_boardingSteps.Count == 0)
                     {
                         _securityQueueIndex = queueIndex;
-                        _trace.Add("SecurityCheck:" + passenger.Id);
                     }
 
                     return;
                 }
 
                 IssueStep(BoardStepKind.Board, FindRowIndex(access.FirstRowId), queueIndex);
+            }
+        }
+
+        private void ObserveAnomalyHeads()
+        {
+            bool hasNewAnomaly = false;
+
+            for (int queueIndex = 0; queueIndex < _heads.Length; queueIndex++)
+            {
+                PassengerDefinition head = GetHead(queueIndex);
+                string echoId = head != null && head.Kind == PassengerDefinition.EchoKind ? head.Id : null;
+
+                if (echoId != null && echoId != _observedEchoHeads[queueIndex])
+                {
+                    hasNewAnomaly = true;
+                }
+
+                _observedEchoHeads[queueIndex] = echoId;
+            }
+
+            if (hasNewAnomaly)
+            {
+                _anomalyVersion++;
+            }
+        }
+
+        private void DispatchBoardingBeat()
+        {
+            bool hasEligibleHead = false;
+
+            foreach (QueueDefinition queue in _definition.Queues)
+            {
+                if (GetLaneAccess(queue.Id).CanBoard)
+                {
+                    hasEligibleHead = true;
+                    break;
+                }
+            }
+
+            if (hasEligibleHead == false)
+            {
+                _hasContinuedBoardingBeat = false;
+                return;
+            }
+
+            if (_hasContinuedBoardingBeat == false)
+            {
+                IsAwaitingBoardingBeat = true;
+                return;
+            }
+
+            int echoQueueIndex = FindReadyEchoQueue();
+
+            if (echoQueueIndex >= 0)
+            {
+                LaneAccess access = GetLaneAccess(_definition.Queues[echoQueueIndex].Id);
+                IssueStep(BoardStepKind.Corruption, FindRowIndex(access.FirstRowId), echoQueueIndex);
+                return;
+            }
+
+            _hasContinuedBoardingBeat = false;
+
+            for (int queueIndex = 0; queueIndex < _definition.Queues.Count; queueIndex++)
+            {
+                LaneAccess access = GetLaneAccess(_definition.Queues[queueIndex].Id);
+
+                if (access.CanBoard)
+                {
+                    IssueStep(BoardStepKind.Board, FindRowIndex(access.FirstRowId), queueIndex);
+                }
             }
         }
 
@@ -714,7 +836,6 @@ namespace LastExit.Domain
         {
             _lostSeatsByBus[busId]++;
             _lostSeats++;
-            _trace.Add("SeatLost:" + busId);
         }
 
         private PassengerDefinition GetHead(int queueIndex)

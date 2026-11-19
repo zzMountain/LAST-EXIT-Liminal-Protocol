@@ -26559,6 +26559,9 @@ MonoBehaviour:
   _radius: 0.7
   _pulseHeight: 1.25
   _color: {r: 0.65, g: 0.94, b: 1, a: 0.9}
+  _impactSeconds: 0.12
+  _impactColor: {r: 1, g: 0.77, b: 0.38, a: 1}
+  _impactWidth: 0.1
 --- !u!1 &966800379
 GameObject:
   m_ObjectHideFlags: 0
@@ -37358,6 +37361,7 @@ GameObject:
   - component: {fileID: 1570484129}
   - component: {fileID: 1570484131}
   - component: {fileID: 1570484130}
+  - component: {fileID: 1570484132}
   m_Layer: 0
   m_Name: LABEL_QUARANTINE_Q-3
   m_TagString: Untagged
@@ -37444,6 +37448,19 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1570484132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1570484128}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab21513c6ba79214f9fc7de259e335db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _suffix: ' Q-3'
 --- !u!1 &1570678679
 GameObject:
   m_ObjectHideFlags: 0
@@ -42518,6 +42535,7 @@ GameObject:
   - component: {fileID: 1845507200}
   - component: {fileID: 1845507199}
   - component: {fileID: 1845507203}
+  - component: {fileID: 1845507204}
   m_Layer: 0
   m_Name: UX Preview HUD
   m_TagString: Untagged
@@ -42693,6 +42711,9 @@ MonoBehaviour:
   _sequence: {fileID: 1845507200}
   _audio: {fileID: 945592638}
   _platform: {fileID: 1845507203}
+  _openMenuOnStart: 1
+  _boardingBeatSeconds: 1.5
+  _stationCondition: {fileID: 1845507204}
 --- !u!114 &1845507200
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42762,6 +42783,8 @@ MonoBehaviour:
   _minimumButtonPixels: 44
   _badgeGapPixels: 4
   _rejectionHintSeconds: 1.2
+  _stabilityAccentSeconds: 0.7
+  _defeatRevealSeconds: 0.35
 --- !u!114 &1845507203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42775,6 +42798,67 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _completedLevelsPerAd: 3
+--- !u!114 &1845507204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845507190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff5fd49e79eccd64cab3e6a56e94da38, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _shakeSeconds: 0.3
+  _shakeDistance: 0.14
+  _flickerSeconds: 0.6
+  _decorationParent: {fileID: 883506653}
+  _stationLights:
+  - {fileID: 145766379}
+  - {fileID: 199042318}
+  - {fileID: 546518273}
+  - {fileID: 741140177}
+  - {fileID: 675640693}
+  - {fileID: 539060355}
+  - {fileID: 122776659}
+  - {fileID: 410227681}
+  - {fileID: 797240581}
+  - {fileID: 1200364395}
+  _shakeRoots:
+  - {fileID: 563157622}
+  - {fileID: 1430308163}
+  - {fileID: 1124042679}
+  - {fileID: 635572440}
+  - {fileID: 1617074432}
+  - {fileID: 1719544522}
+  - {fileID: 2100513077}
+  - {fileID: 915302758}
+  - {fileID: 1148734558}
+  - {fileID: 314647282}
+  - {fileID: 1307627729}
+  - {fileID: 810043791}
+  - {fileID: 1941220200}
+  - {fileID: 1304577419}
+  - {fileID: 1951474334}
+  - {fileID: 1319216093}
+  - {fileID: 20443115}
+  - {fileID: 481604575}
+  - {fileID: 413081490}
+  - {fileID: 351125820}
+  - {fileID: 620199604}
+  - {fileID: 1178162918}
+  - {fileID: 2024704534}
+  - {fileID: 90614152}
+  - {fileID: 25977886}
+  - {fileID: 1924764176}
+  - {fileID: 1602508329}
+  - {fileID: 401761161}
+  - {fileID: 2020697852}
+  - {fileID: 1240240025}
+  - {fileID: 1957833271}
+  - {fileID: 538516543}
+  - {fileID: 883506653}
 --- !u!1 &1856032087
 GameObject:
   m_ObjectHideFlags: 0
