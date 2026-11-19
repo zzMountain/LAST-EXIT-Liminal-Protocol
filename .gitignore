@@ -163,3 +163,6 @@ __pycache__/
 *.pfx
 *.p12
 *.key
+
+# Generated on first import by the Unity IDE integration.
+/.vsconfig
