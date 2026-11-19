@@ -27,6 +27,11 @@ namespace LastExit.Presentation
 
         public void RefreshFraming()
         {
+            if (WebViewportMetrics.HasDrawableCamera(_camera) == false)
+            {
+                return;
+            }
+
             if (_fitBoard)
             {
                 FitBoard();
@@ -41,12 +46,18 @@ namespace LastExit.Presentation
             _camera.transform.position = _basePosition - _camera.transform.up * offset;
         }
 
-        public void SetAvailableRegion(Rect available, Bounds boardBounds)
+        public bool TrySetAvailableRegion(Rect available, Bounds boardBounds)
         {
+            if (WebViewportMetrics.HasDrawableCamera(_camera) == false || WebViewportMetrics.HasArea(available) == false)
+            {
+                return false;
+            }
+
             _available = available;
             _boardBounds = boardBounds;
             _fitBoard = true;
             RefreshFraming();
+            return true;
         }
 
         private void FitBoard()

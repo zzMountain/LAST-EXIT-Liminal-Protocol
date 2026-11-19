@@ -176,6 +176,7 @@ namespace LastExit.Presentation
             _boardOverlay = new LevelBoardOverlay(_runtimeOverlay, board, definition, _badgeTemplate, Project);
             _security.Initialize(_camera, _canvas, inspectionBoard, securityTutorial);
             _layoutScale = 1;
+            _layoutWidth = 0;
             _generation = -1;
 
             if (isActiveAndEnabled)
@@ -376,10 +377,23 @@ namespace LastExit.Presentation
 
         private void RefreshLayout()
         {
-            _framing.RefreshFraming();
+            if (WebViewportMetrics.HasDrawableCamera(_camera) == false)
+            {
+                _layoutWidth = 0;
+                return;
+            }
+
             _scaler.RefreshScale();
             Canvas canvas = _canvas.GetComponent<Canvas>();
             float cssScale = canvas.scaleFactor / WebViewportMetrics.RenderDensity;
+
+            if (WebViewportMetrics.HasArea(_canvas.rect) == false || cssScale <= 0 || float.IsFinite(cssScale) == false)
+            {
+                _layoutWidth = 0;
+                return;
+            }
+
+            _framing.RefreshFraming();
             bool portrait = TerminalUiTheme.UsesStackedHud(_canvas.rect.width * cssScale,
                 _canvas.rect.height * cssScale);
             _hudLayout.Apply(portrait, cssScale);
@@ -390,9 +404,14 @@ namespace LastExit.Presentation
             {
                 _portrait = portrait;
                 _layoutScale = cssScale;
+                if (TryApplyCampaignLayout(cssScale) == false)
+                {
+                    _layoutWidth = 0;
+                    return;
+                }
+
                 _layoutWidth = _canvas.rect.width;
                 _layoutHeight = _canvas.rect.height;
-                ApplyCampaignLayout(cssScale);
                 RenderText(_snapshot);
             }
 
@@ -406,9 +425,8 @@ namespace LastExit.Presentation
             RefreshPanelSections(cssScale);
         }
 
-        private void ApplyCampaignLayout(float scale)
+        private bool TryApplyCampaignLayout(float scale)
         {
-            _boardOverlay.ApplyScale(scale);
             float screenWidth = _canvas.rect.width * scale;
             float screenHeight = _canvas.rect.height * scale;
             _compact = _portrait == false && screenHeight < 560;
@@ -418,15 +436,26 @@ namespace LastExit.Presentation
             float right = left;
             float margin = (_portrait ? 8 : TerminalUiTheme.GetSideMargin(screenWidth)) / scale;
 
+            Vector2 canvasSize = _canvas.rect.size;
+            Rect available = _portrait
+                ? new Rect(margin / canvasSize.x, (footer + margin) / canvasSize.y,
+                    1 - margin * 2 / canvasSize.x, 1 - (header + footer + margin * 2) / canvasSize.y)
+                : new Rect((left + margin * 2) / canvasSize.x, margin / canvasSize.y,
+                    1 - (left + right + margin * 4) / canvasSize.x, 1 - margin * 2 / canvasSize.y);
+
+            if (_framing.TrySetAvailableRegion(available, _boardOverlay.BoardBounds) == false)
+            {
+                return false;
+            }
+
+            _boardOverlay.ApplyScale(scale);
+
             if (_portrait)
             {
                 SetHudRect(_header, new Vector2(0, 1), Vector2.one, new Vector2(0, -header * .5f),
                     new Vector2(0, header));
                 SetHudRect(_footer, Vector2.zero, new Vector2(1, 0), new Vector2(0, footer * .5f),
                     new Vector2(0, footer));
-                _framing.SetAvailableRegion(new Rect(margin / _canvas.rect.width,
-                    (footer + margin) / _canvas.rect.height, 1 - margin * 2 / _canvas.rect.width,
-                    1 - (header + footer + margin * 2) / _canvas.rect.height), _boardOverlay.BoardBounds);
             }
             else
             {
@@ -434,9 +463,6 @@ namespace LastExit.Presentation
                     new Vector2(left * .5f + margin, 0), new Vector2(left, -margin * 2));
                 SetHudRect(_footer, new Vector2(1, 0), Vector2.one,
                     new Vector2(-right * .5f - margin, 0), new Vector2(right, -margin * 2));
-                _framing.SetAvailableRegion(new Rect((left + margin * 2) / _canvas.rect.width,
-                    margin / _canvas.rect.height, 1 - (left + right + margin * 4) / _canvas.rect.width,
-                    1 - margin * 2 / _canvas.rect.height), _boardOverlay.BoardBounds);
             }
 
             SetHeaderText(_title, (_portrait ? 22 : _compact ? 22 : 30) / scale,
@@ -491,6 +517,7 @@ namespace LastExit.Presentation
             _stabilitySegments.rectTransform.anchoredPosition = new Vector2(0, 3 / scale);
             _resultView.ApplyLayout(scale, _canvas.rect.size);
             _security.RefreshLayout(scale, _portrait);
+            return true;
         }
 
         private void ApplyTerminalTheme()

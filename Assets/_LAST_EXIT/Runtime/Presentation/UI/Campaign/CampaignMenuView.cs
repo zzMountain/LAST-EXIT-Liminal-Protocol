@@ -324,7 +324,15 @@ namespace LastExit.Presentation
 
         private void RefreshLayout()
         {
-            float scale = GetComponent<Canvas>().scaleFactor / WebViewportMetrics.RenderDensity;
+            Canvas canvas = GetComponent<Canvas>();
+            float scale = canvas.scaleFactor / WebViewportMetrics.RenderDensity;
+
+            if ((canvas.renderMode != RenderMode.ScreenSpaceOverlay && WebViewportMetrics.HasDrawableCamera(canvas.worldCamera) == false) ||
+                WebViewportMetrics.HasArea(_canvas.rect) == false || scale <= 0 || float.IsFinite(scale) == false)
+            {
+                return;
+            }
+
             Vector2 size = _canvas.rect.size;
 
             if (Mathf.Approximately(scale, _scale) && size == _canvasSize)

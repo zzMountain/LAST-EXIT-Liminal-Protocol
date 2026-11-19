@@ -197,7 +197,9 @@ namespace LastExit.Presentation
 
         public void ProjectTargets(float scale)
         {
-            if (IsInspectionOpen == false || _camera == null || _board == null || _canvas == null)
+            if (IsInspectionOpen == false || _board == null || _canvas == null ||
+                WebViewportMetrics.HasDrawableCamera(_camera) == false || WebViewportMetrics.HasArea(_canvas.rect) == false ||
+                scale <= 0 || float.IsFinite(scale) == false)
             {
                 return;
             }
