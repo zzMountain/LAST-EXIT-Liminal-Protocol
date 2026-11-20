@@ -23,6 +23,6 @@ git clone --single-branch --branch acceptance/unity-project https://github.com/z
 | `Assets/_LAST_EXIT/Runtime/Presentation` | Управление автобусом, сцена, анимация, интерфейс и звук |
 | `Assets/_LAST_EXIT/Runtime/Platform` | Прогресс кампании, язык и интеграция с Яндекс Играми |
 | `Assets/_LAST_EXIT/Resources` | 15 уровней, 48 вариантов раскладки и шрифты интерфейса |
-| `Assets/_LAST_EXIT/ArtLab/Preview` | Общие компоненты игрового ввода и размещения интерфейса |
+| `Assets/_LAST_EXIT/StationVisualsAndComponents` | Оформление станции (`Rendering`), настройки интерфейса (`UI`), компоненты игрового ввода и размещения интерфейса (`Preview`) |
 
 Модели станции и транспорта созданы для проекта. В игре используются шрифты Inter и JetBrains Mono, 15 процедурных звуков и 5 обработанных клипов Stable Audio. Сведения об источниках звука и лицензии находятся в `Assets/_LAST_EXIT/Audio`, лицензии шрифтов — в `Assets/_LAST_EXIT/Art/Fonts` и `Assets/_LAST_EXIT/Resources/UI`.
